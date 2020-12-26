@@ -1,5 +1,6 @@
 ﻿
 ~~strikethrough text~~*emphasized text*
+**bold text**
 ekqeiqei > eiqeijqieqie
 
 [[]pepe](a)

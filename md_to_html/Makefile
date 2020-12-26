@@ -9,3 +9,4 @@ lex.yy.cc: plantilla.lex
 clean:
 	rm prog
 	rm lex.yy.cc
+	rm *.html

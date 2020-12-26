@@ -9,14 +9,14 @@
 using namespace std;
 
 int pos;
-string nombre_link, link;
 
-ifstream fichero_md;
-ofstream fichero_html;
-istream* in;
-ostream* out;
-string src, dst, fichero, html, ext = "";
+ifstream in;
+ofstream out;
+istream* p_in;
+string filename_in, filename_out, ext;
 int n;
+
+string substr(const char* s, size_t pos, size_t len = string::npos);
 %}
 
 /* Alias */
@@ -27,7 +27,7 @@ BLOCKQUOTE		^(\>)
 CODE_1			^(```)(```)$
 CODE_2			``(.)*``
 LINK			\[.*\]\("http://".*\)
-LINE			("* * *") | ^("---")\-* | ^("- - -")\-*
+LINE			("* * *")|^("---")\-*|^("- - -")\-*
 
 HEADING_1		^#
 HEADING_2		^(#{2})
@@ -40,31 +40,28 @@ HEADING_6		^(#{6})
  /* Sección de reglas */
 
 {BOLD}			{
-	out << "<b>" + yytext.substr(2,yytext.size()-3) + "</b>"; 
-	out.flush();
-} 	
+	out << "<b>" << substr(yytext, 2, yyleng - 4) << "</b>";
+}
 
 {ITALIC}		{
-	out << "<i>" + yytext.substr(1,yytext.size()-2) + "</i>"; 
-	out.flush();
+	out << "<i>" << substr(yytext, 1, yyleng - 2) << "</i>";
 }
 
 {STRIKETHROUGH}	{
-	out << "<del>" + yytext.substr(2,yytext.size()-3) + "</del>";
-	out.flush();
+	out << "<del>" << substr(yytext, 2, yyleng - 4) << "</del>";
 }
 
 {BLOCKQUOTE}	{
-	out << "<blockquote>" + yytext.substr(1) + "</blockquote>";
-	out.flush();
+	out << "<blockquote>" << substr(yytext, 1) << "</blockquote>";
 }
 
 {LINK}			{
+	/*
 	pos = yytext.rfind("http");
-	nombre_link = yytext.substr(1,pos-3);
-	link = yytext.substr(pos,yytext.size()-2);
+	nombre_link = substr(yytext, 1,pos-3);
+	link = substr(yytext, pos,yytext.size()-2);
 	out << "<a href=\"" + link + "\">" + nombre_link + "</a>";
-	out.flush();
+	*/
 }
 
 {LINE}			{
@@ -72,37 +69,35 @@ HEADING_6		^(#{6})
 }
 
 {CODE_1} 		{
-	out << "<code>" + yytext.substr(3,yytext.size()-4) + "</code>";
-	out.flush();
+	out << "<code>" << substr(yytext, 3, yyleng - 4) << "</code>";
 }
 
 {CODE_2}		{
-	out << "<code>" + yytext.substr(2,yytext.size()-3) + "</code>";
-	out.flush();
+	out << "<code>" << substr(yytext, 2, yyleng - 3) << "</code>";
 }
 
 {HEADING_1}		{
-	out << "<h1>" + yytext.substr(1) + "</h1>" << endl;
+	out << "<h1>" << substr(yytext, 1) << "</h1>" << endl;
 }
 
 {HEADING_2}		{
-	out << "<h2>" + yytext.substr(2) + "</h2>" << endl;
+	out << "<h2>" << substr(yytext, 2) << "</h2>" << endl;
 }
 
 {HEADING_3}		{
-	out << "<h3>" + yytext.substr(3) + "</h3>" << endl;
+	out << "<h3>" << substr(yytext, 3) << "</h3>" << endl;
 }
 
 {HEADING_4}		{
-	out << "<h4>" + yytext.substr(4) + "</h4>" << endl;
+	out << "<h4>" + substr(yytext, 4) + "</h4>" << endl;
 }
 
 {HEADING_5}		{
-	out << "<h5>" + yytext.substr(5) + "</h5>" << endl;
+	out << "<h5>" + substr(yytext, 5) + "</h5>" << endl;
 }
 
 {HEADING_6}		{
-	out << "<h6>" + yytext.substr(6) + "</h6>" << endl;
+	out << "<h6>" + substr(yytext, 6) + "</h6>" << endl;
 }
 
 
@@ -110,45 +105,49 @@ HEADING_6		^(#{6})
 
 /* Sección de procedimientos */
 
+string substr(const char* s, size_t pos, size_t len) {
+	string str(s);
+	return str.substr(pos, len);
+}
+
 int main(int argc, char** argv) {
-	if (argc == 2) {
-		fichero = argv[1];
-		n = fichero.size()-3;
-		//comprobamos si es un fichero markdown
-		for (int k = n; fichero.size() - k > 0; k++){
-			ext += fichero[k];
-    	}
+	if (argc >= 2) {
+		// comprobamos si es un fichero markdown
+		filename_in = argv[1];
+		n = filename_in.rfind('.');
+		ext = filename_in.substr(n);
 		if (ext != ".md"){
-			cerr << "Error. El fichero " << fichero << " no es un fichero markdown" << endl;
+			cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
 			exit(1);
 		}
+
 		// abrimos el fichero
-		fichero_md.open(argv[1]);
-		if (!fichero_md) {
-			cerr << "Error abriendo fichero_md " << argv[1] << endl;
+		in.open(argv[1]);
+		if (!in) {
+			cerr << "Error abriendo archivo de entrada " << argv[1] << endl;
 			exit(1);
 		}
-		in = &fichero_md;
+		p_in = &in;
+		filename_out = filename_in.substr(0,n);
+		filename_out += ".html";
 
 	} else {
-		in = &cin;
+		filename_out = "out.html";
+		p_in = &cin;
 	}
-	
+
 	// creamos el fichero html
-	html = fichero.substr(0,n);
-	html += ".html";
-	fichero_html.open(html);
-	if (!fichero_html) {
-		cerr << "Error creando el fichero " << html << endl;
+	out.open(filename_out);
+	if (!out) {
+		cerr << "Error abriendo archivo de salida " << filename_out << endl;
 		exit(1);
 	}
-	out = &fichero_html;
 
-	yyFlexLexer flujo(in, out);
+	yyFlexLexer flujo(p_in, &out);
 	flujo.yylex();
 	cout << "Fin" << endl;
-	fichero_md.close();
-	fichero_html.close();
+	out.close();
+	in.close();
 
 	return 0;
 }
