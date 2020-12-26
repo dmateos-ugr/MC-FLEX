@@ -8,13 +8,8 @@
 
 using namespace std;
 
-int pos;
-
 ifstream in;
 ofstream out;
-istream* p_in;
-string filename_in, filename_out, ext;
-int n;
 
 string substr(const char* s, size_t pos, size_t len = string::npos);
 %}
@@ -23,18 +18,18 @@ string substr(const char* s, size_t pos, size_t len = string::npos);
 BOLD			\*\*(.)*\*\*
 ITALIC			\*(.)*\*
 STRIKETHROUGH	\~\~(.)*\~\~
-BLOCKQUOTE		^(\>)
-CODE_1			^(```)(```)$
+BLOCKQUOTE		^\>.*
+CODE_1			^```(.|\n)*```$
 CODE_2			``(.)*``
-LINK			\[.*\]\("http://".*\)
+LINK			\[.*\]\(.*\)
 LINE			("* * *")|^("---")\-*|^("- - -")\-*
 
-HEADING_1		^#
-HEADING_2		^(#{2})
-HEADING_3		^(#{3})
-HEADING_4		^(#{4})
-HEADING_5		^(#{5})
-HEADING_6		^(#{6})
+HEADING_1		^#{1}.*
+HEADING_2		^#{2}.*
+HEADING_3		^#{3}.*
+HEADING_4		^#{4}.*
+HEADING_5		^#{5}.*
+HEADING_6		^#{6}.*
 
 %%
  /* Sección de reglas */
@@ -56,12 +51,11 @@ HEADING_6		^(#{6})
 }
 
 {LINK}			{
-	/*
-	pos = yytext.rfind("http");
-	nombre_link = substr(yytext, 1,pos-3);
-	link = substr(yytext, pos,yytext.size()-2);
-	out << "<a href=\"" + link + "\">" + nombre_link + "</a>";
-	*/
+	string s(yytext);
+	int pos = s.find(']');
+	string text = s.substr(1, pos - 1);
+	string link = s.substr(pos+2, yyleng - (pos + 2) - 1);
+	out << "<a href=\"" + link + "\">" + text + "</a>";
 }
 
 {LINE}			{
@@ -69,37 +63,36 @@ HEADING_6		^(#{6})
 }
 
 {CODE_1} 		{
-	out << "<code>" << substr(yytext, 3, yyleng - 4) << "</code>";
+	out << "<code>" << substr(yytext, 3, yyleng - 6) << "</code>";
 }
 
 {CODE_2}		{
-	out << "<code>" << substr(yytext, 2, yyleng - 3) << "</code>";
-}
-
-{HEADING_1}		{
-	out << "<h1>" << substr(yytext, 1) << "</h1>" << endl;
-}
-
-{HEADING_2}		{
-	out << "<h2>" << substr(yytext, 2) << "</h2>" << endl;
-}
-
-{HEADING_3}		{
-	out << "<h3>" << substr(yytext, 3) << "</h3>" << endl;
-}
-
-{HEADING_4}		{
-	out << "<h4>" + substr(yytext, 4) + "</h4>" << endl;
-}
-
-{HEADING_5}		{
-	out << "<h5>" + substr(yytext, 5) + "</h5>" << endl;
+	out << "<code>" << substr(yytext, 2, yyleng - 4) << "</code>";
 }
 
 {HEADING_6}		{
 	out << "<h6>" + substr(yytext, 6) + "</h6>" << endl;
 }
 
+{HEADING_5}		{
+	out << "<h5>" + substr(yytext, 5) + "</h5>" << endl;
+}
+
+{HEADING_4}		{
+	out << "<h4>" + substr(yytext, 4) + "</h4>" << endl;
+}
+
+{HEADING_3}		{
+	out << "<h3>" << substr(yytext, 3) << "</h3>" << endl;
+}
+
+{HEADING_2}		{
+	out << "<h2>" << substr(yytext, 2) << "</h2>" << endl;
+}
+
+{HEADING_1}		{
+	out << "<h1>" << substr(yytext, 1) << "</h1>" << endl;
+}
 
 %%
 
@@ -111,11 +104,13 @@ string substr(const char* s, size_t pos, size_t len) {
 }
 
 int main(int argc, char** argv) {
+	string filename_out;
+	istream* p_in;
 	if (argc >= 2) {
 		// comprobamos si es un fichero markdown
-		filename_in = argv[1];
-		n = filename_in.rfind('.');
-		ext = filename_in.substr(n);
+		string filename_in(argv[1]);
+		int n = filename_in.rfind('.');
+		string ext = filename_in.substr(n);
 		if (ext != ".md"){
 			cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
 			exit(1);

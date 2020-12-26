@@ -3,7 +3,7 @@
 **bold text**
 ekqeiqei > eiqeijqieqie
 
-[[]pepe](a)
+[pepe](a)
 ```
 aaaa
 eeeeee
