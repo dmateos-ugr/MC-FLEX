@@ -43,29 +43,50 @@ En este bloque le indicaremos al pre-procesador que lo que estamos definiendo qu
 Es un bloque delimitado por las secuencias %{ y %} donde podemos indicar la inclusión de los ficheros de cabecera necesarios, la declaración de variables globales y las declaraciones de procedimientos descritos en la sección de Procedimientos de Usuario.
 
 En este bloque necesitaremos incluir:
-- Ficheros de cabecera: `iostream, fstream, string`
+- Ficheros de cabecera: `iostream, fstream, string, stack, algorithm`
 - Variables globales:
 	- `ofstream out`- Será nuestro flujo de salida para la escritura del fichero HTML.
-	- `bool quote, italic, h, h1, h2, h3, h4, h5, h6` - Una variable global booleana para algunas funcionalidades de markdown que pueden ser anidadas y que requieren trato especial. Hablaremos más a fondo de este trato en la sección de Reglas.
+	- `bool quote, bold, italic, strike` - Una variable global booleana para algunas funcionalidades de markdown que pueden ser anidadas y que requieren trato especial. Hablaremos más a fondo de este trato en la sección de Reglas.
+	- `int header`- Indicará el tipo de título 
+	- `stack<string> listas` - Si hay listas anidadas necesitamos saber en qué orden cerrarlas.
 - Procedimientos:
 	- `string substr(const  char* s, size_t pos, size_t len = string::npos)`
 	Procedimiento que usaremos para obtener subcadenas de _yytext_.
-
+	- `bool  handle_list(const  char* yytext, bool ordered)`
+	Procedimiento que usaremos para añadir un elemento a una lista, cerrando los elementos y las listas anteriores en caso necesario.
+	- `void  end_lists(int n =  0)`
+	Cierra las listas que haya abiertas hasta que solo queden _n_.
+	- `void  set_header(int n)` 
+	Añade la etiqueta inicial de un título.
+	- `void  end_headers()`
+	Añadir la etiqueta final de un título en caso de que sea necesario.
+	- `void  escape_html(string& s)`
+	Reemplaza los caracteres de _s_ que son reservados para HTML por su representación adecuada.
+	
 Por tanto, el bloque de copia nos quedaría de la siguiente forma:
 ```C++
 %{
-#include <iostream>
-#include <fstream>
-#include <string>
+#include  <iostream>
+#include  <fstream>
+#include  <stack>
+#include  <string>
+#include  <algorithm>
 
-using namespace std;
+using  namespace std;
 
 ofstream out;
-bool quote, italic, h, h1, h2, h3, h4, h5, h6;
-string substr(const char* s, size_t pos, size_t len = string::npos);
+bool quote, bold, italic, strike;
+int header;
+stack<string> listas;
+
+string  substr(const  char* s, size_t pos, size_t len = string::npos);
+bool  handle_list(const  char* yytext, bool ordered);
+void  end_lists(int n =  0);
+void  set_header(int n);
+void  end_headers();
+void  escape_html(string& s);
 %}
 ```
-
 
 - **Bloque de definición de alias**
 
@@ -79,15 +100,16 @@ En este bloque necesitamos incluir:
 - `STRIKETHROUGH \~\~.*\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
 - `BLOCKQUOTE ^\>` para poder identificar las 
 	 > citas.
-- ``CODE_1 ^```(.|\n)*```$`` y ``CODE_2 `(.)*` ``  para poder identificar los `códigos`
+- `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*` ```  para poder identificar los `códigos`
 - `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/).
+- `PAD " "*` para identificar espacios en blanco.
 - `LINE ("* * *")|^("---")\-*|^("- - -")\-*` para poder identificar las líneas: 
 - --
 - `HEADING_1 ^#{1}`, `HEADING_2  ^#{2}`, `HEADING_3 ^#{3}`,  `HEADING_4 ^#{4}`, `HEADING_5 ^#{5}` y  `HEADING_6 ^#{6}` para poder identificar los distintos tipos de títulos. 
 
 Las expresiones regulares *FUNCIONALIDAD*_END son necesarias para cubrir el problema de anidamiento de funcionalidades. En la sección de Reglas se mostrará más a fondo el motivo de su necesidad.
 
-Finalmente,  el bloque de copia nos quedaría de la siguiente forma:
+Finalmente,  el bloque de alias nos quedaría de la siguiente forma:
 
 ```
 BOLD 					\*\*.*\*\*
@@ -153,16 +175,105 @@ En esta sección escribiremos en C++ sin ninguna restricción aquellos procedimi
 
 Necesitamos incluir: 
 - La implementación del método `string substr(const char* s, size_t pos, size_t len)`
+
+Creamos un string a partir del puntero constante char y usamos el método de instancia substr de la clase string de la STL.
 ```C++
 string substr(const char* s, size_t pos, size_t len) {
 	string str(s);
 	return str.substr(pos, len);
 }
 ```
+- La implementación del método `bool handle_list(const  char* yytext, bool ordered)`
 
-- Un método para generar la cabecera del fichero HTML
 ```C++
-void  generate_html(yyFlexLexer& flujo, const  string& title) {
+bool handle_list(const  char* yytext, bool ordered) {
+	string l = (ordered ?  "ol"  :  "ul");
+	string s(yytext);
+	int n_tabs =  s.find_first_not_of('\t');
+	int n_list = n_tabs +  1;
+
+	if (n_list ==  listas.size() +  1) {
+		// Creamos lista, posiblemente dentro de otra
+		out <<  "<"  << l <<  ">"  << endl;
+		listas.push(l);
+	} else  if (n_list <  listas.size()) {
+		// Terminamos listas, y seguimos con una lista exterior
+		end_lists(n_list);
+	} else  if (n_list ==  listas.size()) {
+		// Seguimos en la misma lista. Terminar primero el elemento anterior
+		out <<  "</li>"  << endl;
+	} else {
+		// Lista inválida (se han añadido más de dos tabuladores nuevos).
+		// Se devuelve false y se parseará como texto normal
+		return  false;
+	}
+	out <<  "<li>";
+	
+	return  true;
+}
+```
+- La implementación del método `void  end_lists(int n)`
+
+Mediante un while vamos a ir quitando listas de la pila hasta que haya _n_ listas en ella. Antes de sacar la lista de la pila, finalizamos la lista en el fichero HTML `out <<  "</li>\n</"  <<  listas.top() <<  ">\n"`.
+
+```C++
+void end_lists(int n) {
+	while (n <  listas.size()) {
+		// Terminar listas abiertas
+		out <<  "</li>\n</"  <<  listas.top() <<  ">\n";
+		listas.pop();
+	}
+}
+```
+- La implementación del método `void  set_header(int n)`
+
+Si no se está escribiendo un título `if(!header)` , se va a escribir en el fichero HTML el inicio de título con el tipo indicado por parámetro `out <<  "<h"  << n <<  ">"`. 
+
+```C++
+void set_header(int n) {
+	if (!header) {
+		header = n;
+		out <<  "<h"  << n <<  ">";
+	}
+}
+```
+- La implementación del método `void  end_headers()`
+
+En caso de estar escribiéndose un título se va a escribir en el fichero HTML un fin de título correspondiente `out <<  "</h"  << header <<  ">"`. Dejamos la variable global _header_ a 0 para indicar que no se está escribiendo ningún título. 
+```C++
+void end_headers(){
+	if (!header)
+		return;
+	out <<  "</h"  << header <<  ">";
+	header =  0;
+}
+```
+- La implementación del método `escape_html(string& s)`
+
+Mediante el uso de un for vamos a recorrer todos los caracteres de una cadena y, con la ayuda de un switch, los cambiamos por su representación adecuada en caso de ser un símbolo reservado para HTML.
+```C++
+void escape_html(string& s) {
+	string buffer;
+	buffer.reserve(s.size());
+
+	for (size_t pos =  0; pos !=  s.size(); ++pos) {
+		switch (s[pos]) {
+			case  '&': buffer.append("&amp;"); break;
+			case  '\"': buffer.append("&quot;"); break;
+			case  '\'': buffer.append("&apos;"); break;
+			case  '<': buffer.append("&lt;"); break;
+			case  '>': buffer.append("&gt;"); break;
+			default: buffer.append(&s[pos], 1); break;
+		}
+	}
+	s.swap(buffer);
+}
+```
+- Un método para generar la cabecera del fichero HTML
+
+Escribimos la cabecera del fichero HTML antes de llamar a la función _yylex()_.
+```C++
+void generate_html(yyFlexLexer& flujo, const  string& title) {
 	out <<
 		"<!DOCTYPE html>\n"
 		"<html>\n"
@@ -235,8 +346,12 @@ En este caso, permitimos que se escriba en Markdown por la entrada estándar, es
 		exit(1);
 	}
 ```
+Antes de la lectura del fichero, ignoramos una posible marca de orden de bytes.
+```C++
+	ignore_utf8_header(*p_in);
+```
 
-Finalmente, iniciamos la lectura de la entrada y escritura del fichero HTML.
+Finalmente, iniciamos la lectura de la entrada y la escritura del fichero HTML.
 ```C++
 	yyFlexLexer flujo(p_in, &out);
 	generate_html(flujo, title);
@@ -282,6 +397,7 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
+	ignore_utf8_header(*p_in);
 	yyFlexLexer flujo(p_in, &out);
 	generate_html(flujo, title);
 
