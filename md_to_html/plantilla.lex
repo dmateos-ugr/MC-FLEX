@@ -175,11 +175,11 @@ HEADING_6		^#{6}
 {CODE_1} 		{
 	string s(yytext);
 	size_t start = s.find('\n') + 1;
-	size_t end = s.find("\n```\n") + 1;
+	size_t end = s.find("\n```") + 1;
 	string code = s.substr(start, end - start);
 	escape_html(code);
 	out << "<pre><code>" << code << "</code></pre>";
-	if (end != yyleng - 5)
+	if (end != yyleng - 3)
 		yyless(start + end-start + 3);
 }
 
