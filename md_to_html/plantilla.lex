@@ -19,7 +19,7 @@ ITALIC			\*(.)*\*
 STRIKETHROUGH	\~\~(.)*\~\~
 BLOCKQUOTE		^\>.*
 CODE_1			^```(.|\n)*```$
-CODE_2			``(.)*``
+CODE_2			`(.)*`
 LINK			\[.*\]\(.*\)
 LINE			("* * *")|^("---")\-*|^("- - -")\-*
 
@@ -62,11 +62,13 @@ HEADING_6		^#{6}.*
 }
 
 {CODE_1} 		{
-	out << "<code>" << substr(yytext, 3, yyleng - 6) << "</code>";
+	string s(yytext);
+	int pos = s.find('\n') + 1;
+	out << "<pre><code>" << s.substr(pos, yyleng - pos - 3) << "</code></pre>";
 }
 
 {CODE_2}		{
-	out << "<code>" << substr(yytext, 2, yyleng - 4) << "</code>";
+	out << "<code>" << substr(yytext, 1, yyleng - 2) << "</code>";
 }
 
 {HEADING_6}		{
@@ -108,8 +110,9 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 	  "<html>\n"
 	  "<head>\n"
 	  "<title>" << title << "</title>\n" <<
+	  "<link rel=\"stylesheet\" href=\"https://stackedit.io/style.css\">"
 	  "</head>\n"
-	  "<body>\n";
+	  "<body class=\"stackedit__html\">\n";
 
 	flujo.yylex();
 

@@ -4,12 +4,19 @@
 ekqeiqei > eiqeijqieqie
 
 [pepe](a)
-```
+```deleteme
 aaaa
 eeeeee
 eeeeeee
 eeeeee
 ```
+
+`asdf`
+
+**negrita con [enlace](asdf)**
+
+**~~*fiestaaa*~~**
+
 **eeeeee holaaaa aaa**
 > Blockquote
 > Written with [StackEdit](https://stackedit.io/).
