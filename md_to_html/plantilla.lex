@@ -8,7 +8,6 @@
 
 using namespace std;
 
-ifstream in;
 ofstream out;
 
 string substr(const char* s, size_t pos, size_t len = string::npos);
@@ -103,9 +102,26 @@ string substr(const char* s, size_t pos, size_t len) {
 	return str.substr(pos, len);
 }
 
+void generate_html(yyFlexLexer& flujo, const string& title) {
+	out <<
+	  "<!DOCTYPE html>\n"
+	  "<html>\n"
+	  "<head>\n"
+	  "<title>" << title << "</title>\n" <<
+	  "</head>\n"
+	  "<body>\n";
+
+	flujo.yylex();
+
+	out <<
+	  "</body>\n"
+	  "</html>\n";
+}
+
 int main(int argc, char** argv) {
-	string filename_out;
-	istream* p_in;
+	string filename_out, title;
+	ifstream in;
+	istream *p_in;
 	if (argc >= 2) {
 		// comprobamos si es un fichero markdown
 		string filename_in(argv[1]);
@@ -123,15 +139,15 @@ int main(int argc, char** argv) {
 			exit(1);
 		}
 		p_in = &in;
-		filename_out = filename_in.substr(0,n);
-		filename_out += ".html";
+		title = filename_in.substr(0,n);
 
 	} else {
-		filename_out = "out.html";
+		title = "out";
 		p_in = &cin;
 	}
 
 	// creamos el fichero html
+	filename_out = title + ".html";
 	out.open(filename_out);
 	if (!out) {
 		cerr << "Error abriendo archivo de salida " << filename_out << endl;
@@ -139,7 +155,8 @@ int main(int argc, char** argv) {
 	}
 
 	yyFlexLexer flujo(p_in, &out);
-	flujo.yylex();
+	generate_html(flujo, title);
+
 	cout << "Fin" << endl;
 	out.close();
 	in.close();
