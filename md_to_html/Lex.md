@@ -3,7 +3,7 @@
 **bold text**
 ekqeiqei > eiqeijqieqie
 
-# *Titulo cursiva*
+# ##*#Titulo cursiva*
 
 
 [pepe](a)
@@ -19,6 +19,10 @@ eeeeee
 **negrita con [enlace](asdf)**
 
 **~~*fiestaaa*~~**
+
+**fiesta2** jeje **asdf**
+
+**n *nc* n *nc*** *c*
 
 **eeeeee holaaaa aaa**
 > Blockquote

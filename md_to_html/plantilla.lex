@@ -4,28 +4,33 @@
 %{
 #include <iostream>
 #include <fstream>
+#include <stack>
 #include <string>
 
 using namespace std;
 
 ofstream out;
-bool quote, italic, h, h1, h2, h3, h4, h5, h6;
+bool quote, bold, italic, strike, h, h1, h2, h3, h4, h5, h6;
+stack<string> listas;
 
 string substr(const char* s, size_t pos, size_t len = string::npos);
+bool handle_list(const char* yytext, bool ordered);
 %}
 
 /* Alias */
-BOLD			\*\*.*\*\*
+BOLD			\*\*.+\*\*
 BOLD_END		\*\*
-ITALIC			\*.*\*
+ITALIC			\*[^\*]+\*
 ITALIC_END		\*
-STRIKETHROUGH	\~\~.*\~\~
+STRIKETHROUGH	\~\~.+\~\~
 STRIKETHROUGH_END	\~\~
 BLOCKQUOTE		^\>
-CODE_1			^```(.|\n)*```$
-CODE_2			`(.)*`
+CODE_1			^```(.|\n)+```$
+CODE_2			`(.)+`
 LINK			\[.*\]\(.*\)
 LINK_END		\]\(.*\)
+UNORDERED_LIST	^\t*\-" "
+ORDERED_LIST	^\t*[0-9]+\." "
 LINE			("* * *")|^("---")\-*|^("- - -")\-*
 
 HEADING_1		^#{1}
@@ -43,6 +48,11 @@ HEADING_6		^#{6}
 	if (quote) {
 		out << "</blockquote>" << endl;
 		quote = false;
+	}
+	while (!listas.empty()) {
+		// Terminar listas abiertas
+		out << "</li>\n</" << listas.top() << ">\n";
+		listas.pop();
 	}
 	out << "</p>" << endl << "<p>" << endl;
 }
@@ -65,12 +75,16 @@ HEADING_6		^#{6}
 }
 
 {BOLD}			{
+	if (bold)
+		REJECT;
 	out << "<b>";
+	bold = true;
 	yyless(2);
 }
 
 {BOLD_END}		{
 	out << "</b>";
+	bold = false;
 }
 
 {ITALIC}		{
@@ -87,12 +101,16 @@ HEADING_6		^#{6}
 }
 
 {STRIKETHROUGH}	{
+	if (strike)
+		REJECT;
 	out << "<del>";
+	strike = true;
 	yyless(2);
 }
 
 {STRIKETHROUGH_END}	{
 	out << "</del>";
+	strike = false;
 }
 
 {BLOCKQUOTE}	{
@@ -170,6 +188,15 @@ HEADING_6		^#{6}
 	}
 }
 
+{UNORDERED_LIST}	{
+	if (!handle_list(yytext, false))
+		REJECT;
+}
+
+{ORDERED_LIST}		{
+	if (!handle_list(yytext, true))
+		REJECT;
+}
 %%
 
 /* Sección de procedimientos */
@@ -177,6 +204,33 @@ HEADING_6		^#{6}
 string substr(const char* s, size_t pos, size_t len) {
 	string str(s);
 	return str.substr(pos, len);
+}
+
+bool handle_list(const char* yytext, bool ordered) {
+	string l = (ordered ? "ol" : "ul");
+	string s(yytext);
+	int n_tabs = s.find_first_not_of('\t');
+	int n_list = n_tabs + 1;
+	if (n_list == listas.size() + 1) {
+		// Creamos lista, posiblemente dentro de otra
+		out << "<" << l << ">" << endl;
+		listas.push(l);
+	} else if (n_list < listas.size()) {
+		// Terminamos listas, y seguimos con una lista exterior
+		while (n_list < listas.size()) {
+			out << "</li>\n</" << listas.top() << ">" << endl;
+			listas.pop();
+		}
+	} else if (n_list == listas.size()) {
+		// Seguimos en la misma lista. Terminar primero el elemento anterior
+		out << "</li>" << endl;
+	} else {
+		// Lista inválida (se han añadido más de dos tabuladores nuevos).
+		// Se devuelve false y se parseará como texto normal
+		return false;
+	}
+	out << "<li>";
+	return true;
 }
 
 void generate_html(yyFlexLexer& flujo, const string& title) {
