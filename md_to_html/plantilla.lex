@@ -6,6 +6,7 @@
 #include <fstream>
 #include <stack>
 #include <string>
+#include <algorithm>
 
 using namespace std;
 
@@ -29,13 +30,18 @@ void set_header(int n);
 
 // Añadir la etiqueta final de un header en caso de que sea necesario
 void end_headers();
+
+// Reemplaza los caracteres de `s` que son reservados para HTML por su
+// representación adecuada
+void escape_html(string& s);
+
 %}
 
 /* Alias */
 BOLD			\*\*.+\*\*
 BOLD_END		\*\*
-ITALIC			\*[^\*]+\*
-ITALIC_END		\*
+ITALIC			[\_|\*][^\*]+[\_|\*]
+ITALIC_END		[\_|\*]
 STRIKETHROUGH	\~\~.+\~\~
 STRIKETHROUGH_END	\~\~
 BLOCKQUOTE		^\>
@@ -151,11 +157,15 @@ HEADING_6		^#{6}
 {CODE_1} 		{
 	string s(yytext);
 	int pos = s.find('\n') + 1;
-	out << "<pre><code>" << s.substr(pos, yyleng - pos - 3) << "</code></pre>";
+	string code = s.substr(pos, yyleng - pos - 3);
+	escape_html(code);
+	out << "<pre><code>" << code << "</code></pre>";
 }
 
 {CODE_2}		{
-	out << "<code>" << substr(yytext, 1, yyleng - 2) << "</code>";
+	string code = substr(yytext, 1, yyleng - 2);
+	escape_html(code);
+	out << "<code>" << code << "</code>";
 }
 
 {HEADING_6}		{
@@ -246,6 +256,22 @@ void end_headers(){
 	header = 0;
 }
 
+void escape_html(string& s) {
+	string buffer;
+	buffer.reserve(s.size());
+	for (size_t pos = 0; pos != s.size(); ++pos) {
+		switch (s[pos]) {
+			case '&':  buffer.append("&amp;");       break;
+			case '\"': buffer.append("&quot;");      break;
+			case '\'': buffer.append("&apos;");      break;
+			case '<':  buffer.append("&lt;");        break;
+			case '>':  buffer.append("&gt;");        break;
+			default:   buffer.append(&s[pos], 1); break;
+		}
+	}
+	s.swap(buffer);
+}
+
 void generate_html(yyFlexLexer& flujo, const string& title) {
 	out <<
 	  "<!DOCTYPE html>\n"
@@ -266,7 +292,6 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 }
 
 void ignore_utf8_header(istream& in) {
-	//unsigned char header[] = "\xEF\xBB\xBF";
 	int header[] = {0xEF, 0xBB, 0xBF};
 	for (int i = 0; i < sizeof(header)/sizeof(header[0]); i++) {
 		if (in.peek() != header[i])
