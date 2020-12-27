@@ -157,7 +157,7 @@ Esta es la sección más importante en el proceso de desarrollo de la aplicació
 En esta sección sólo se permite un tipo de escritura. Las reglas se definen como sigue: 
 ```
 Expresión_Regular		 {acciones escritas en C++}
-``` 
+```
 Al comienzo de la línea se indica la expresión regular, seguida inmediatamente por **uno o varios** tabuladores, hasta llegar al conjunto de acciones en C++ que deben ir encerrados en un bloque de llaves.
 
 Es importante destacar que _flex_ sigue las siguientes normas para la identificación de expresiones regulares: 
