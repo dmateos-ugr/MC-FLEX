@@ -1,5 +1,5 @@
 set -e
 
 make
-./prog Lex.md
+./prog Memoria_FLEX.md
 #xdg-open Lex.html

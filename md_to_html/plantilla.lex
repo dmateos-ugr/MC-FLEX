@@ -10,11 +10,25 @@
 using namespace std;
 
 ofstream out;
-bool quote, bold, italic, strike, h, h1, h2, h3, h4, h5, h6;
+bool quote, bold, italic, strike;
+int header;
 stack<string> listas;
 
+// Equivalente a string::substr pero para un const char*
 string substr(const char* s, size_t pos, size_t len = string::npos);
+
+// Añadir un elemento a una lista, cerrando los elementos y las listas
+// anteriores en caso necesario
 bool handle_list(const char* yytext, bool ordered);
+
+// Cerrar las listas que haya abiertas hasta que solo queden `n`
+void end_lists(int n = 0);
+
+// Añadir la etiqueta inicial de un header
+void set_header(int n);
+
+// Añadir la etiqueta final de un header en caso de que sea necesario
+void end_headers();
 %}
 
 /* Alias */
@@ -27,11 +41,15 @@ STRIKETHROUGH_END	\~\~
 BLOCKQUOTE		^\>
 CODE_1			^```(.|\n)+```$
 CODE_2			`(.)+`
+PAD				" "*
+LINE_1			({PAD}\-{PAD}){3,}
+LINE_2			({PAD}\*{PAD}){3,}
+LINE			{LINE_1}|{LINE_2}
 LINK			\[.*\]\(.*\)
 LINK_END		\]\(.*\)
+IMAGE			\!{LINK}
 UNORDERED_LIST	^\t*\-" "
 ORDERED_LIST	^\t*[0-9]+\." "
-LINE			("* * *")|^("---")\-*|^("- - -")\-*
 
 HEADING_1		^#{1}
 HEADING_2		^#{2}
@@ -49,28 +67,13 @@ HEADING_6		^#{6}
 		out << "</blockquote>" << endl;
 		quote = false;
 	}
-	while (!listas.empty()) {
-		// Terminar listas abiertas
-		out << "</li>\n</" << listas.top() << ">\n";
-		listas.pop();
-	}
+	end_headers();
+	end_lists();
 	out << "</p>" << endl << "<p>" << endl;
 }
 
 \n				{
-	if (h1)
-		out << "</h1>";
-	else if (h2)
-		out << "</h2>";
-	else if (h3)
-		out << "</h3>";
-	else if (h4)
-		out << "</h4>";
-	else if (h5)
-		out << "</h5>";
-	else if (h6)
-		out << "</h6>";
-	h = h1 = h2 = h3 = h4 = h5 = h6 = false;
+	end_headers();
 	out << endl << "<br>" << endl;
 }
 
@@ -132,7 +135,16 @@ HEADING_6		^#{6}
 	out << "</a>";
 }
 
+{IMAGE}			{
+	string s(yytext);
+	int pos = s.find("]");
+	string alt = s.substr(2, pos-2);
+	string link = s.substr(pos+2, yyleng - (pos + 2) - 1);
+	out << "<img src=\"" << link << "\" alt=\"" << alt << "\">";
+}
+
 {LINE}			{
+	end_lists();
 	out << "<hr>" << endl;
 }
 
@@ -147,45 +159,27 @@ HEADING_6		^#{6}
 }
 
 {HEADING_6}		{
-	if (!h) {
-		out << "<h6>";
-		h = h6 = true;
-	}
+	set_header(6);
 }
 
 {HEADING_5}		{
-	if (!h) {
-		out << "<h5>";
-		h = h5 = true;
-	}
+	set_header(5);
 }
 
 {HEADING_4}		{
-	if (!h) {
-		out << "<h4>";
-		h = h4 = true;
-	}
+	set_header(4);
 }
 
 {HEADING_3}		{
-	if (!h) {
-		out << "<h3>";
-		h = h3 = true;
-	}
+	set_header(3);
 }
 
 {HEADING_2}		{
-	if (!h) {
-		out << "<h2>";
-		h = h2 = true;
-	}
+	set_header(2);
 }
 
 {HEADING_1}		{
-	if (!h) {
-		out << "<h1>";
-		h = h1 = true;
-	}
+	set_header(1);
 }
 
 {UNORDERED_LIST}	{
@@ -217,10 +211,7 @@ bool handle_list(const char* yytext, bool ordered) {
 		listas.push(l);
 	} else if (n_list < listas.size()) {
 		// Terminamos listas, y seguimos con una lista exterior
-		while (n_list < listas.size()) {
-			out << "</li>\n</" << listas.top() << ">" << endl;
-			listas.pop();
-		}
+		end_lists(n_list);
 	} else if (n_list == listas.size()) {
 		// Seguimos en la misma lista. Terminar primero el elemento anterior
 		out << "</li>" << endl;
@@ -231,6 +222,28 @@ bool handle_list(const char* yytext, bool ordered) {
 	}
 	out << "<li>";
 	return true;
+}
+
+void end_lists(int n) {
+	while (n < listas.size()) {
+		// Terminar listas abiertas
+		out << "</li>\n</" << listas.top() << ">\n";
+		listas.pop();
+	}
+}
+
+void set_header(int n) {
+	if (!header) {
+		header = n;
+		out << "<h" << n << ">";
+	}
+}
+
+void end_headers(){
+	if (!header)
+		return;
+	out << "</h" << header << ">";
+	header = 0;
 }
 
 void generate_html(yyFlexLexer& flujo, const string& title) {
@@ -250,6 +263,16 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 	  "</p>\n"
 	  "</body>\n"
 	  "</html>\n";
+}
+
+void ignore_utf8_header(istream& in) {
+	//unsigned char header[] = "\xEF\xBB\xBF";
+	int header[] = {0xEF, 0xBB, 0xBF};
+	for (int i = 0; i < sizeof(header)/sizeof(header[0]); i++) {
+		if (in.peek() != header[i])
+			return;
+		in.ignore();
+	}
 }
 
 int main(int argc, char** argv) {
@@ -288,6 +311,7 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
+	ignore_utf8_header(*p_in);
 	yyFlexLexer flujo(p_in, &out);
 	generate_html(flujo, title);
 
