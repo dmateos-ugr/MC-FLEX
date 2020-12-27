@@ -7,23 +7,23 @@
 1. **Introducción**
 2. **Desarrollo de la aplicación**
 	- **Planteamiento**
-	- **Plantilla**	
-		- **Sección de Declaraciones** 
+	- **Plantilla**
+		- **Sección de Declaraciones**
 		- **Sección de Reglas**
 		- **Sección de Procedimientos de Usuario**
-	- **Generación del código fuente** 
+	- **Generación del código fuente**
 3. **Ejemplo de ejecución**
 
 
 ## 1. INTRODUCCIÓN
 Markdown es un lenguaje de marcado que facilita la aplicación de formato a un texto empleando una serie de caracteres de una forma especial. Por otro lado, HTML es un lenguaje de marcado que se utiliza para el desarrollo de páginas de Internet. En esta memoria se explicará con completo detalle el desarrollo de una aplicación que convierte archivos Markdown (extensión _.md_) en archivos HTML.
 
-La aplicación ha sido creada en lenguaje C++ mediante el uso del generador de analizadores léxicos _flex_. _flex_ se apoya en una plantilla que recibe como parámetro y, a partir de ella, genera el código fuente. La estructura de la plantilla se compone de tres secciones: sección de Declaraciones, sección de Reglas y sección de Procedimientos de Usuario. 
+La aplicación ha sido creada en lenguaje C++ mediante el uso del generador de analizadores léxicos _flex_. _flex_ se apoya en una plantilla que recibe como parámetro y, a partir de ella, genera el código fuente. La estructura de la plantilla se compone de tres secciones: sección de Declaraciones, sección de Reglas y sección de Procedimientos de Usuario.
 
 
 ## 2. DESARROLLO DE LA APLICACIÓN
 ## - Planteamiento
-En primer lugar, tenemos que tener claro el funcionamiento que presentará la aplicación a desarrollar. Queremos que la aplicación reciba un archivo Markdown y que, a partir de este, genere un archivo equivalente en formato HTML. 
+En primer lugar, tenemos que tener claro el funcionamiento que presentará la aplicación a desarrollar. Queremos que la aplicación reciba un archivo Markdown y que, a partir de este, genere un archivo equivalente en formato HTML.
 
 Las funcionalidades del lenguaje Markdown que vamos a implementar son:
 - Por completar
@@ -31,14 +31,14 @@ Las funcionalidades del lenguaje Markdown que vamos a implementar son:
 
 Todo el desarrollo de la aplicación recae sobre la creación de la plantilla sobre la cual se apoyará *flex* para generar el código fuente.
 
-## - Plantilla 
+## - Plantilla
 
 Como la aplicación solo recibirá un fichero de entrada, podemos omitir la llamada a yywrap() con la opción noyywrap, obteniendo así una mejora de eficiencia. Para el desarrollo de está aplicación será necesario la implementación de las tres secciones de una estructura de plantilla *flex*, las cuales se detallan a continuación.
 
 ### Sección de Declaraciones
 - **Bloque de copia**
 
-En este bloque le indicaremos al pre-procesador que lo que estamos definiendo queremos que aparezca “tal cual” en el fichero C++ generado. 
+En este bloque le indicaremos al pre-procesador que lo que estamos definiendo queremos que aparezca “tal cual” en el fichero C++ generado.
 
 Es un bloque delimitado por las secuencias %{ y %} donde podemos indicar la inclusión de los ficheros de cabecera necesarios, la declaración de variables globales y las declaraciones de procedimientos descritos en la sección de Procedimientos de Usuario.
 
@@ -47,18 +47,18 @@ En este bloque necesitaremos incluir:
 - Variables globales:
 	- `ofstream out`- Será nuestro flujo de salida para la escritura del fichero HTML.
 	- `bool quote, bold, italic, strike` - Una variable global booleana para algunas funcionalidades de markdown que pueden ser anidadas y que requieren trato especial. Hablaremos más a fondo de este trato en la sección de Reglas.
-	- `int header`- Indicará el tipo de título 
+	- `int header`- Indicará el tipo de título que hay abierto en ese instante, para luego cerrarlo.
 	- `stack<string> listas` - Si hay listas anidadas necesitamos saber en qué orden cerrarlas.
 - Procedimientos:
 	- `string substr(const  char* s, size_t pos, size_t len = string::npos)`
 	Procedimiento que usaremos para obtener subcadenas de _yytext_.
 	- `bool  handle_list(const  char* yytext, bool ordered)`
 	Procedimiento que usaremos para añadir un elemento a una lista, cerrando los elementos y las listas anteriores en caso necesario.
-	- `void  end_lists(int n =  0)`
+	- `bool  end_lists(int n =  0)`
 	Cierra las listas que haya abiertas hasta que solo queden _n_.
 	- `void  set_header(int n)` 
 	Añade la etiqueta inicial de un título.
-	- `void  end_headers()`
+	- `bool  end_headers()`
 	Añadir la etiqueta final de un título en caso de que sea necesario.
 	- `void  escape_html(string& s)`
 	Reemplaza los caracteres de _s_ que son reservados para HTML por su representación adecuada.
@@ -81,24 +81,24 @@ stack<string> listas;
 
 string  substr(const  char* s, size_t pos, size_t len = string::npos);
 bool  handle_list(const  char* yytext, bool ordered);
-void  end_lists(int n =  0);
+bool  end_lists(int n =  0);
 void  set_header(int n);
-void  end_headers();
+bool  end_headers();
 void  escape_html(string& s);
 %}
 ```
 
 - **Bloque de definición de alias**
 
-En este bloque definiremos las expresiones regulares necesarias para identificar las distintas funcionalidades de Markdown que queremos implementar. 
+En este bloque definiremos las expresiones regulares necesarias para identificar las distintas funcionalidades de Markdown que queremos implementar.
 
 Es necesario que al principio de cada línea aparezca el nombre con el cual queremos identificar la expresión regular, seguido de la propia expresión regular con **al menos** una tabulación.
 
-En este bloque necesitamos incluir: 
+En este bloque incluimos:
 - `BOLD \*\*.*\*\*`  y `BOLD_END \*\*` para poder identificar las cadenas en **negrita**.
 - `ITALIC \*.*\*` y `ITALIC_END \*` para poder identificar las cadenas en *cursiva*.
 - `STRIKETHROUGH \~\~.*\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
-- `BLOCKQUOTE ^\>` para poder identificar las 
+- `BLOCKQUOTE ^\>` para poder identificar las
 > citas.
 - `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*` ```  para poder identificar los `códigos`
 - `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/).
@@ -152,7 +152,7 @@ HEADING_6 				^#{6}
 
 
 ### Sección de Reglas
-Esta es la sección más importante en el proceso de desarrollo de la aplicación. En ella, vamos a indicar las acciones que queremos realizar cuando se identifique una de las funcionalidades descritas en la sección anterior, es decir, que queremos que haga nuestro programa cuando se lea del fichero de entrada una cadena que cumpla una determinada expresión regular. En resumen, es donde vamos a describir el paso a fichero de tipo HTML.
+Esta es la sección más importante en el proceso de desarrollo de la aplicación. En ella, vamos a indicar las acciones que queremos realizar cuando se identifique una de las funcionalidades descritas en la sección anterior, es decir, qué queremos que haga nuestro programa cuando se lea del fichero de entrada una cadena que cumpla una determinada expresión regular. En resumen, es donde vamos a describir el paso a fichero de tipo HTML.
 
 En esta sección sólo se permite un tipo de escritura. Las reglas se definen como sigue: 
 ```
@@ -214,7 +214,7 @@ bool handle_list(const  char* yytext, bool ordered) {
 ```
 - La implementación del método `void  end_lists(int n)`
 
-Mediante un while vamos a ir quitando listas de la pila hasta que haya _n_ listas en ella. Antes de sacar la lista de la pila, finalizamos la lista en el fichero HTML `out <<  "</li>\n</"  <<  listas.top() <<  ">\n"`.
+Mediante un while vamos a ir quitando listas de la pila hasta que haya _n_ listas en ella. Antes de sacar la lista de la pila, finalizamos la lista en el fichero HTML.
 
 ```C++
 void end_lists(int n) {
@@ -227,7 +227,7 @@ void end_lists(int n) {
 ```
 - La implementación del método `void  set_header(int n)`
 
-Si no se está escribiendo un título `if(!header)` , se va a escribir en el fichero HTML el inicio de título con el tipo indicado por parámetro `out <<  "<h"  << n <<  ">"`. 
+Si no se está escribiendo un título, se va a escribir en el fichero HTML el inicio de título con el tipo indicado por parámetro
 
 ```C++
 void set_header(int n) {
@@ -239,7 +239,7 @@ void set_header(int n) {
 ```
 - La implementación del método `void  end_headers()`
 
-En caso de estar escribiéndose un título se va a escribir en el fichero HTML un fin de título correspondiente `out <<  "</h"  << header <<  ">"`. Dejamos la variable global _header_ a 0 para indicar que no se está escribiendo ningún título. 
+En caso de estar escribiéndose un título se va a escribir en el fichero HTML un fin de título correspondiente. Dejamos la variable global _header_ a 0 para indicar que no se está escribiendo ningún título. 
 ```C++
 void end_headers(){
 	if (!header)

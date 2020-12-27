@@ -65,12 +65,7 @@ IMAGE			\!{LINK}
 UNORDERED_LIST	^\t*\-" "
 ORDERED_LIST	^\t*[0-9]+\." "
 
-HEADING_1		^#{1}
-HEADING_2		^#{2}
-HEADING_3		^#{3}
-HEADING_4		^#{4}
-HEADING_5		^#{5}
-HEADING_6		^#{6}
+HEADING			^#{1,6}
 
 %%
  /* Sección de reglas */
@@ -194,28 +189,8 @@ HEADING_6		^#{6}
 	out << "<code>" << code << "</code>";
 }
 
-{HEADING_6}		{
-	set_header(6);
-}
-
-{HEADING_5}		{
-	set_header(5);
-}
-
-{HEADING_4}		{
-	set_header(4);
-}
-
-{HEADING_3}		{
-	set_header(3);
-}
-
-{HEADING_2}		{
-	set_header(2);
-}
-
-{HEADING_1}		{
-	set_header(1);
+{HEADING}		{
+	set_header(yyleng);
 }
 
 {UNORDERED_LIST}	{
