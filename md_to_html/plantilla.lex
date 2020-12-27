@@ -23,13 +23,15 @@ string substr(const char* s, size_t pos, size_t len = string::npos);
 bool handle_list(const char* yytext, bool ordered);
 
 // Cerrar las listas que haya abiertas hasta que solo queden `n`
-void end_lists(int n = 0);
+// Devuelve true si ha cerrado alguna
+bool end_lists(int n = 0);
 
 // Añadir la etiqueta inicial de un header
 void set_header(int n);
 
 // Añadir la etiqueta final de un header en caso de que sea necesario
-void end_headers();
+// Devuelve true si la ha añadido
+bool end_headers();
 
 // Reemplaza los caracteres de `s` que son reservados para HTML por su
 // representación adecuada
@@ -48,14 +50,14 @@ BLOCKQUOTE		^\>
 
 CODE_1_LINE_CONTENT	(`{0,2}[^`])*`{0,2}
 CODE_1_LINE		```{CODE_1_LINE_CONTENT}```
-CODE_1 			^```.*\n(.|\n)*```$
+CODE_1 			^```.*\n(.|\n)*```\n
 
 CODE_2_CONTENT	([^`]|"```")+
 CODE_2			`{CODE_2_CONTENT}+`
 
 PAD				" "*
-LINE_1			({PAD}\-{PAD}){3,}
-LINE_2			({PAD}\*{PAD}){3,}
+LINE_1			({PAD}\-{PAD}){3,}\n
+LINE_2			({PAD}\*{PAD}){3,}\n
 LINE			{LINE_1}|{LINE_2}
 LINK			\[.*\]\(.*\)
 LINK_END		\]\(.*\)
@@ -73,20 +75,23 @@ HEADING_6		^#{6}
 %%
  /* Sección de reglas */
 
-\n\n			{
+\n{2,}			{
 	out << endl;
 	if (quote) {
 		out << "</blockquote>" << endl;
 		quote = false;
 	}
-	end_headers();
-	end_lists();
-	out << "</p>" << endl << "<p>" << endl;
+	bool remove_br = end_headers();
+	remove_br |= end_lists();
+	out << endl;
+	if (!remove_br)
+		out << "<br><br>" << endl;
 }
 
 \n				{
-	end_headers();
-	out << endl << "<br>" << endl;
+	out << endl;
+	if (!end_headers())
+		out << "<br>" << endl;
 }
 
 {BOLD}			{
@@ -255,12 +260,14 @@ bool handle_list(const char* yytext, bool ordered) {
 	return true;
 }
 
-void end_lists(int n) {
+bool end_lists(int n) {
+	bool ret = n < listas.size();
 	while (n < listas.size()) {
 		// Terminar listas abiertas
 		out << "</li>\n</" << listas.top() << ">\n";
 		listas.pop();
 	}
+	return ret;
 }
 
 void set_header(int n) {
@@ -270,11 +277,12 @@ void set_header(int n) {
 	}
 }
 
-void end_headers(){
+bool end_headers(){
 	if (!header)
-		return;
+		return false;
 	out << "</h" << header << ">";
 	header = 0;
+	return true;
 }
 
 void escape_html(string& s) {
@@ -301,8 +309,7 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 	  "<title>" << title << "</title>\n" <<
 	  "<link rel=\"stylesheet\" href=\"https://stackedit.io/style.css\">"
 	  "</head>\n"
-	  "<body class=\"stackedit__html\">\n"
-	  "<p>\n";
+	  "<body class=\"stackedit__html\">\n";
 
 	flujo.yylex();
 
