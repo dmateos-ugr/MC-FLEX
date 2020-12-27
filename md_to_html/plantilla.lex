@@ -40,13 +40,19 @@ void escape_html(string& s);
 /* Alias */
 BOLD			\*\*.+\*\*
 BOLD_END		\*\*
-ITALIC			[\_|\*][^\*]+[\_|\*]
-ITALIC_END		[\_|\*]
+ITALIC			(\_[^\*]+\_)|(\*[^\*]+\*)
+ITALIC_END		\_|\*
 STRIKETHROUGH	\~\~.+\~\~
 STRIKETHROUGH_END	\~\~
 BLOCKQUOTE		^\>
-CODE_1			^```(.|\n)+```$
-CODE_2			`(.)+`
+
+CODE_1_LINE_CONTENT	(`{0,2}[^`])*`{0,2}
+CODE_1_LINE		```{CODE_1_LINE_CONTENT}```
+CODE_1 			^```.*\n(.|\n)*```$
+
+CODE_2_CONTENT	([^`]|"```")+
+CODE_2			`{CODE_2_CONTENT}+`
+
 PAD				" "*
 LINE_1			({PAD}\-{PAD}){3,}
 LINE_2			({PAD}\*{PAD}){3,}
@@ -92,6 +98,8 @@ HEADING_6		^#{6}
 }
 
 {BOLD_END}		{
+	if (!bold)
+		REJECT;
 	out << "</b>";
 	bold = false;
 }
@@ -105,6 +113,8 @@ HEADING_6		^#{6}
 }
 
 {ITALIC_END}	{
+	if (!italic)
+		REJECT;
 	out << "</i>";
 	italic = false;
 }
@@ -118,6 +128,8 @@ HEADING_6		^#{6}
 }
 
 {STRIKETHROUGH_END}	{
+	if (!strike)
+		REJECT;
 	out << "</del>";
 	strike = false;
 }
@@ -154,12 +166,21 @@ HEADING_6		^#{6}
 	out << "<hr>" << endl;
 }
 
+{CODE_1_LINE}	{
+	string code = substr(yytext, 3, yyleng - 6);
+	escape_html(code);
+	out << "<code>" << code << "</code>";
+}
+
 {CODE_1} 		{
 	string s(yytext);
-	int pos = s.find('\n') + 1;
-	string code = s.substr(pos, yyleng - pos - 3);
+	size_t start = s.find('\n') + 1;
+	size_t end = s.find("\n```\n") + 1;
+	string code = s.substr(start, end - start);
 	escape_html(code);
 	out << "<pre><code>" << code << "</code></pre>";
+	if (end != yyleng - 5)
+		yyless(start + end-start + 3);
 }
 
 {CODE_2}		{
