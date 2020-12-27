@@ -62,7 +62,7 @@ En este bloque necesitaremos incluir:
 	Añadir la etiqueta final de un título en caso de que sea necesario.
 	- `void  escape_html(string& s)`
 	Reemplaza los caracteres de _s_ que son reservados para HTML por su representación adecuada.
-	
+
 Por tanto, el bloque de copia nos quedaría de la siguiente forma:
 ```C++
 %{
@@ -99,8 +99,8 @@ En este bloque necesitamos incluir:
 - `ITALIC \*.*\*` y `ITALIC_END \*` para poder identificar las cadenas en *cursiva*.
 - `STRIKETHROUGH \~\~.*\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
 - `BLOCKQUOTE ^\>` para poder identificar las 
-	 > citas.
-- `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*````  para poder identificar los `códigos`
+> citas.
+- `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*` ```  para poder identificar los `códigos`
 - `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/).
 - `PAD " "*` para identificar espacios en blanco.
 - `LINE ("* * *")|^("---")\-*|^("- - -")\-*` para poder identificar las líneas: 
