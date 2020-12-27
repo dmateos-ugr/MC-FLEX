@@ -295,9 +295,9 @@ void generate_html(yyFlexLexer& flujo, const  string& title) {
 - La función main
 
 En primer lugar comprobaremos si se está pasando un fichero como argumento. Tenemos así dos situaciones:
-```
-- Nos proporcionan un fichero. 
-```
+
+_1_ - Nos proporcionan un fichero. 
+
 
 En este caso tenemos que comprobar que el fichero sea de tipo Markdown, es decir, extensión _.md_. Si el tipo de fichero no es válido, se aborta la ejecución del programa con un error.
 ```C++
@@ -323,9 +323,9 @@ En caso contrario, el fichero se abre y se guarda su nombre para utilizarlo en l
 		title = filename_in.substr(0,n);
 ```
 
-```
-- El programa se ejecuta sin argumentos
-```
+
+_2_ - El programa se ejecuta sin argumentos
+
 
 En este caso, permitimos que se escriba en Markdown por la entrada estándar, es decir, directamente por teclado, y asignamos un nombre por defecto para el fichero HTML.
 
