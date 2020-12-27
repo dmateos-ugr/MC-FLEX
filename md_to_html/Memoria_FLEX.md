@@ -100,7 +100,7 @@ En este bloque necesitamos incluir:
 - `STRIKETHROUGH \~\~.*\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
 - `BLOCKQUOTE ^\>` para poder identificar las 
 	 > citas.
-- `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*` ```  para poder identificar los `códigos`
+- `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*````  para poder identificar los `códigos`
 - `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/).
 - `PAD " "*` para identificar espacios en blanco.
 - `LINE ("* * *")|^("---")\-*|^("- - -")\-*` para poder identificar las líneas: 
