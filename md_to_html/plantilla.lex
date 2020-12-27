@@ -9,55 +9,109 @@
 using namespace std;
 
 ofstream out;
+bool quote, italic, h, h1, h2, h3, h4, h5, h6;
 
 string substr(const char* s, size_t pos, size_t len = string::npos);
 %}
 
 /* Alias */
-BOLD			\*\*(.)*\*\*
-ITALIC			\*(.)*\*
-STRIKETHROUGH	\~\~(.)*\~\~
-BLOCKQUOTE		^\>.*
+BOLD			\*\*.*\*\*
+BOLD_END		\*\*
+ITALIC			\*.*\*
+ITALIC_END		\*
+STRIKETHROUGH	\~\~.*\~\~
+STRIKETHROUGH_END	\~\~
+BLOCKQUOTE		^\>
 CODE_1			^```(.|\n)*```$
 CODE_2			`(.)*`
 LINK			\[.*\]\(.*\)
+LINK_END		\]\(.*\)
 LINE			("* * *")|^("---")\-*|^("- - -")\-*
 
-HEADING_1		^#{1}.*
-HEADING_2		^#{2}.*
-HEADING_3		^#{3}.*
-HEADING_4		^#{4}.*
-HEADING_5		^#{5}.*
-HEADING_6		^#{6}.*
+HEADING_1		^#{1}
+HEADING_2		^#{2}
+HEADING_3		^#{3}
+HEADING_4		^#{4}
+HEADING_5		^#{5}
+HEADING_6		^#{6}
 
 %%
  /* Sección de reglas */
 
-\n\n			{ out << endl << "</p>" << endl << "<p>" << endl; }
-\n				{ out << endl << "<br>" << endl; }
+\n\n			{
+	out << endl;
+	if (quote) {
+		out << "</blockquote>" << endl;
+		quote = false;
+	}
+	out << "</p>" << endl << "<p>" << endl;
+}
+
+\n				{
+	if (h1)
+		out << "</h1>";
+	else if (h2)
+		out << "</h2>";
+	else if (h3)
+		out << "</h3>";
+	else if (h4)
+		out << "</h4>";
+	else if (h5)
+		out << "</h5>";
+	else if (h6)
+		out << "</h6>";
+	h = h1 = h2 = h3 = h4 = h5 = h6 = false;
+	out << endl << "<br>" << endl;
+}
 
 {BOLD}			{
-	out << "<b>" << substr(yytext, 2, yyleng - 4) << "</b>";
+	out << "<b>";
+	yyless(2);
+}
+
+{BOLD_END}		{
+	out << "</b>";
 }
 
 {ITALIC}		{
-	out << "<i>" << substr(yytext, 1, yyleng - 2) << "</i>";
+	if (italic)
+		REJECT;
+	out << "<i>";
+	italic = true;
+	yyless(1);
+}
+
+{ITALIC_END}	{
+	out << "</i>";
+	italic = false;
 }
 
 {STRIKETHROUGH}	{
-	out << "<del>" << substr(yytext, 2, yyleng - 4) << "</del>";
+	out << "<del>";
+	yyless(2);
+}
+
+{STRIKETHROUGH_END}	{
+	out << "</del>";
 }
 
 {BLOCKQUOTE}	{
-	out << "<blockquote>" << substr(yytext, 1) << "</blockquote>";
+	if (!quote) {
+		out << "<blockquote>";
+		quote = true;
+	}
 }
 
 {LINK}			{
 	string s(yytext);
-	int pos = s.find(']');
-	string text = s.substr(1, pos - 1);
-	string link = s.substr(pos+2, yyleng - (pos + 2) - 1);
-	out << "<a href=\"" + link + "\">" + text + "</a>";
+	int pos = s.rfind('(');
+	string link = s.substr(pos+1, yyleng - (pos + 1) - 1);
+	out << "<a href=\"" + link + "\">";
+	yyless(1); // sólo hemos consumido el '['
+}
+
+{LINK_END}		{
+	out << "</a>";
 }
 
 {LINE}			{
@@ -75,27 +129,45 @@ HEADING_6		^#{6}.*
 }
 
 {HEADING_6}		{
-	out << "<h6>" + substr(yytext, 6) + "</h6>" << endl;
+	if (!h) {
+		out << "<h6>";
+		h = h6 = true;
+	}
 }
 
 {HEADING_5}		{
-	out << "<h5>" + substr(yytext, 5) + "</h5>" << endl;
+	if (!h) {
+		out << "<h5>";
+		h = h5 = true;
+	}
 }
 
 {HEADING_4}		{
-	out << "<h4>" + substr(yytext, 4) + "</h4>" << endl;
+	if (!h) {
+		out << "<h4>";
+		h = h4 = true;
+	}
 }
 
 {HEADING_3}		{
-	out << "<h3>" << substr(yytext, 3) << "</h3>" << endl;
+	if (!h) {
+		out << "<h3>";
+		h = h3 = true;
+	}
 }
 
 {HEADING_2}		{
-	out << "<h2>" << substr(yytext, 2) << "</h2>" << endl;
+	if (!h) {
+		out << "<h2>";
+		h = h2 = true;
+	}
 }
 
 {HEADING_1}		{
-	out << "<h1>" << substr(yytext, 1) << "</h1>" << endl;
+	if (!h) {
+		out << "<h1>";
+		h = h1 = true;
+	}
 }
 
 %%
