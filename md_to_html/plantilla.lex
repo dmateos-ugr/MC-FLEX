@@ -33,6 +33,9 @@ HEADING_6		^#{6}.*
 %%
  /* Sección de reglas */
 
+\n\n			{ out << endl << "</p>" << endl << "<p>" << endl; }
+\n				{ out << endl << "<br>" << endl; }
+
 {BOLD}			{
 	out << "<b>" << substr(yytext, 2, yyleng - 4) << "</b>";
 }
@@ -112,11 +115,13 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 	  "<title>" << title << "</title>\n" <<
 	  "<link rel=\"stylesheet\" href=\"https://stackedit.io/style.css\">"
 	  "</head>\n"
-	  "<body class=\"stackedit__html\">\n";
+	  "<body class=\"stackedit__html\">\n"
+	  "<p>\n";
 
 	flujo.yylex();
 
 	out <<
+	  "</p>\n"
 	  "</body>\n"
 	  "</html>\n";
 }
