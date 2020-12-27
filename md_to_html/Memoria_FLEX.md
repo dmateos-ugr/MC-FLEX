@@ -120,9 +120,9 @@ ITALIC 					\*.*\*
 
 ITALIC_END 				\*
 
-STRIKETHROUGH 			\~\~.*\~\~
+STRIKETHROUGH 				\~\~.*\~\~
 
-STRIKETHROUGH_END 		\~\~
+STRIKETHROUGH_END 			\~\~
 
 BLOCKQUOTE 				^\>
 
