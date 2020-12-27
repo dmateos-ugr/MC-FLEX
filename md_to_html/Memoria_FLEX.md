@@ -23,11 +23,7 @@ La aplicación ha sido creada en lenguaje C++ mediante el uso del generador de a
 
 ## 2. DESARROLLO DE LA APLICACIÓN
 ## - Planteamiento
-En primer lugar, tenemos que tener claro el funcionamiento que presentará la aplicación a desarrollar. Queremos que la aplicación reciba un archivo Markdown y que, a partir de este, genere un archivo equivalente en formato HTML.
-
-Las funcionalidades del lenguaje Markdown que vamos a implementar son:
-- Por completar
-- Por completar
+En primer lugar, tenemos que tener claro el funcionamiento que presentará la aplicación a desarrollar. Queremos que la aplicación reciba un archivo Markdown y que, a partir de este, genere un archivo equivalente en formato HTML. Las funcionalidades del lenguaje Markdown que vamos a implementar son, entre otras, marcado en negrita, cursiva, tachado, citas, códigos, links y títulos.
 
 Todo el desarrollo de la aplicación recae sobre la creación de la plantilla sobre la cual se apoyará *flex* para generar el código fuente.
 
@@ -43,7 +39,7 @@ En este bloque le indicaremos al pre-procesador que lo que estamos definiendo qu
 Es un bloque delimitado por las secuencias %{ y %} donde podemos indicar la inclusión de los ficheros de cabecera necesarios, la declaración de variables globales y las declaraciones de procedimientos descritos en la sección de Procedimientos de Usuario.
 
 En este bloque necesitaremos incluir:
-- Ficheros de cabecera: `iostream, fstream, string, stack, algorithm`
+- Ficheros de cabecera: `iostream, fstream, string, stack`
 - Variables globales:
 	- `ofstream out`- Será nuestro flujo de salida para la escritura del fichero HTML.
 	- `bool quote, bold, italic, strike` - Una variable global booleana para algunas funcionalidades de markdown que pueden ser anidadas y que requieren trato especial. Hablaremos más a fondo de este trato en la sección de Reglas.
@@ -56,7 +52,7 @@ En este bloque necesitaremos incluir:
 	Procedimiento que usaremos para añadir un elemento a una lista, cerrando los elementos y las listas anteriores en caso necesario.
 	- `bool  end_lists(int n =  0)`
 	Cierra las listas que haya abiertas hasta que solo queden _n_.
-	- `void  set_header(int n)` 
+	- `void  set_header(int n)`
 	Añade la etiqueta inicial de un título.
 	- `bool  end_headers()`
 	Añadir la etiqueta final de un título en caso de que sea necesario.
@@ -70,7 +66,6 @@ Por tanto, el bloque de copia nos quedaría de la siguiente forma:
 #include  <fstream>
 #include  <stack>
 #include  <string>
-#include  <algorithm>
 
 using  namespace std;
 
@@ -95,58 +90,66 @@ En este bloque definiremos las expresiones regulares necesarias para identificar
 Es necesario que al principio de cada línea aparezca el nombre con el cual queremos identificar la expresión regular, seguido de la propia expresión regular con **al menos** una tabulación.
 
 En este bloque incluimos:
-- `BOLD \*\*.*\*\*`  y `BOLD_END \*\*` para poder identificar las cadenas en **negrita**.
-- `ITALIC \*.*\*` y `ITALIC_END \*` para poder identificar las cadenas en *cursiva*.
-- `STRIKETHROUGH \~\~.*\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
+- `BOLD \*\*.+\*\*`  y `BOLD_END \*\*` para poder identificar las cadenas en **negrita**.
+- `ITALIC (\_[^\*]+\_)|(\*[^\*]+\*)` y `ITALIC_END \_|\*` para poder identificar las cadenas en *cursiva*.
+- `STRIKETHROUGH \~\~.+\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
 - `BLOCKQUOTE ^\>` para poder identificar las
 > citas.
-- `CODE_1 ^```(.|\n)*```$` y ```CODE_2 `(.)*` ```  para poder identificar los `códigos`
 - `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/).
 - `PAD " "*` para identificar espacios en blanco.
-- `LINE ("* * *")|^("---")\-*|^("- - -")\-*` para poder identificar las líneas: 
+- `LINE_1 ({PAD}\-{PAD}){3,}\n` y `LINE_2 ({PAD}\*{PAD}){3,}\n` para poder identificar las líneas:
 - --
-- `HEADING_1 ^#{1}`, `HEADING_2  ^#{2}`, `HEADING_3 ^#{3}`,  `HEADING_4 ^#{4}`, `HEADING_5 ^#{5}` y  `HEADING_6 ^#{6}` para poder identificar los distintos tipos de títulos. 
+- `LINE {LINE_1}|{LINE_2}` para facilitar la asignación de funcionalidad en la sección de Reglas y evitar repetir código.
+- `HEADING ^#{1,6}` para poder identificar los distintos tipos de títulos.
+- `IMAGE \!{LINK}` para poder identrificar las imágenes.
+- `UNORDERED_LIST ^\t*\-" "` para poder identificar las listas no enumeradas.
+- `ORDERED_LIST ^\t*[0-9]+\." "` para poder identificar las listas enumeradas.
+- Para la identificación de código incluimos 5 expresiones regulares distintas debido a la gran diversidad presentada por Markdown en este ámbito, así como su complejidad de implementación.
+```
+CODE_1_LINE_CONTENT				(`{0,2}[^`])*`{0,2}
+CODE_1_LINE					```{CODE_1_LINE_CONTENT}```
+CODE_1 						^```.*\n(.|\n)*```\n
+
+CODE_2_CONTENT					([^`]|"```")+
+CODE_2						`{CODE_2_CONTENT}+`
+```
+	- `CODE_1` -> Para identificar los códigos en forma de bloque
+	- `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas
+	- `CODE_1_LINE_CONTENT` -> Puede haber 1 o 2 comillas inversas seguidas dentro del código (entre 3 comillas inversas) pero no 3
+	- `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa
+	- `CODE_2_CONTENT` -> Dentro de un código de 1 comilla inversa puede haber 3 comillas inversas seguidas pero no 1.
 
 Las expresiones regulares *FUNCIONALIDAD*_END son necesarias para cubrir el problema de anidamiento de funcionalidades. En la sección de Reglas se mostrará más a fondo el motivo de su necesidad.
 
-Finalmente,  el bloque de alias nos quedaría de la siguiente forma:
+Finalmente, el bloque de alias nos quedaría de la siguiente forma:
 
 ```
-BOLD 					\*\*.*\*\*
+BOLD						\*\*.+\*\*
+BOLD_END					\*\*
+ITALIC						(\_[^\*]+\_)|(\*[^\*]+\*)
+ITALIC_END					\_|\*
+STRIKETHROUGH					\~\~.+\~\~
+STRIKETHROUGH_END				\~\~
+BLOCKQUOTE					^\>
 
-BOLD_END 				\*\*
+CODE_1_LINE_CONTENT				(`{0,2}[^`])*`{0,2}
+CODE_1_LINE					```{CODE_1_LINE_CONTENT}```
+CODE_1 						^```.*\n(.|\n)*```\n
 
-ITALIC 					\*.*\*
+CODE_2_CONTENT					([^`]|"```")+
+CODE_2						`{CODE_2_CONTENT}+`
 
-ITALIC_END 				\*
+PAD						" "*
+LINE_1						({PAD}\-{PAD}){3,}\n
+LINE_2						({PAD}\*{PAD}){3,}\n
+LINE						{LINE_1}|{LINE_2}
+LINK						\[.*\]\(.*\)
+LINK_END					\]\(.*\)
+IMAGE						\!{LINK}
+UNORDERED_LIST					^\t*\-" "
+ORDERED_LIST					^\t*[0-9]+\." "
 
-STRIKETHROUGH 				\~\~.*\~\~
-
-STRIKETHROUGH_END 			\~\~
-
-BLOCKQUOTE 				^\>
-
-CODE_1 					^```(.|\n)*```$
-
-CODE_2 					`(.)*`
-
-LINK 					\[.*\]\(.*\)
-
-LINK_END 				\]\(.*\)
-
-LINE 					("* * *")|^("---")\-*|^("- - -")\-*
-
-HEADING_1 				^#{1}
-
-HEADING_2 				^#{2}
-
-HEADING_3 				^#{3}
-
-HEADING_4 				^#{4}
-
-HEADING_5 				^#{5}
-
-HEADING_6 				^#{6}
+HEADING						^#{1,6}
 ```
 
 
@@ -154,15 +157,15 @@ HEADING_6 				^#{6}
 ### Sección de Reglas
 Esta es la sección más importante en el proceso de desarrollo de la aplicación. En ella, vamos a indicar las acciones que queremos realizar cuando se identifique una de las funcionalidades descritas en la sección anterior, es decir, qué queremos que haga nuestro programa cuando se lea del fichero de entrada una cadena que cumpla una determinada expresión regular. En resumen, es donde vamos a describir el paso a fichero de tipo HTML.
 
-En esta sección sólo se permite un tipo de escritura. Las reglas se definen como sigue: 
+En esta sección sólo se permite un tipo de escritura. Las reglas se definen como sigue:
 ```
 Expresión_Regular		 {acciones escritas en C++}
 ```
 Al comienzo de la línea se indica la expresión regular, seguida inmediatamente por **uno o varios** tabuladores, hasta llegar al conjunto de acciones en C++ que deben ir encerrados en un bloque de llaves.
 
-Es importante destacar que _flex_ sigue las siguientes normas para la identificación de expresiones regulares: 
+Es importante destacar que _flex_ sigue las siguientes normas para la identificación de expresiones regulares:
 - Siempre intenta encajar una expresión regular con la cadena más larga posible.
-- En caso de conflicto entre expresiones regulares (pueden aplicarse dos o más para una misma cadena de entrada), _flex_ se guía por estricto orden de declaración de las reglas. 
+- En caso de conflicto entre expresiones regulares (pueden aplicarse dos o más para una misma cadena de entrada), _flex_ se guía por estricto orden de declaración de las reglas.
 
 Existe una regla por defecto, que es: `. {ECHO;}`.  Esta regla se aplica en el caso de que la entrada no encaje con ninguna de las reglas. Lo que hace es imprimir en la salida (en nuestro caso el archivo HTML creado) el carácter que no encaja con ninguna regla.
 
@@ -173,7 +176,7 @@ Vamos a necesitar incluir las siguientes reglas:
 ### Sección de Procedimientos de Usuario
 En esta sección escribiremos en C++ sin ninguna restricción aquellos procedimientos que hayamos necesitado en la sección de Reglas. Todo lo que aparezca en esta sección será incorporado al final del fichero fuente generado.
 
-Necesitamos incluir: 
+Necesitamos incluir:
 - La implementación del método `string substr(const char* s, size_t pos, size_t len)`
 
 Creamos un string a partir del puntero constante char y usamos el método de instancia substr de la clase string de la STL.
@@ -208,7 +211,7 @@ bool handle_list(const  char* yytext, bool ordered) {
 		return  false;
 	}
 	out <<  "<li>";
-	
+
 	return  true;
 }
 ```
@@ -239,7 +242,7 @@ void set_header(int n) {
 ```
 - La implementación del método `void  end_headers()`
 
-En caso de estar escribiéndose un título se va a escribir en el fichero HTML un fin de título correspondiente. Dejamos la variable global _header_ a 0 para indicar que no se está escribiendo ningún título. 
+En caso de estar escribiéndose un título se va a escribir en el fichero HTML un fin de título correspondiente. Dejamos la variable global _header_ a 0 para indicar que no se está escribiendo ningún título.
 ```C++
 void end_headers(){
 	if (!header)
@@ -285,8 +288,8 @@ void generate_html(yyFlexLexer& flujo, const  string& title) {
 		"<p>\n";
 
 	flujo.yylex();
-	
-	out << 
+
+	out <<
 		"</p>\n"
 		"</body>\n"
 		"</html>\n";
@@ -296,7 +299,7 @@ void generate_html(yyFlexLexer& flujo, const  string& title) {
 
 En primer lugar comprobaremos si se está pasando un fichero como argumento. Tenemos así dos situaciones:
 
-_1_ - Nos proporcionan un fichero. 
+_1_ - Nos proporcionan un fichero.
 
 
 En este caso tenemos que comprobar que el fichero sea de tipo Markdown, es decir, extensión _.md_. Si el tipo de fichero no es válido, se aborta la ejecución del programa con un error.
@@ -383,7 +386,7 @@ int main(int argc, char** argv) {
 		}
 		p_in = &in;
 		title = filename_in.substr(0,n);
-		
+
 	} else {
 		title = "out";
 		p_in = &cin;
@@ -410,9 +413,9 @@ int main(int argc, char** argv) {
 ```
 
 ## - Generación del código fuente
-Para generar el código fuente tendremos que ejecutar la siguiente orden: 
+Para generar el código fuente tendremos que ejecutar la siguiente orden:
 ```
-flex --c++ plantilla.lex 
+flex --c++ plantilla.lex
 ```
 Obteniendo así el archivo `lex.yy.cc`. A partir de éste podemos obtener el ejecutable con la orden:
 ```
