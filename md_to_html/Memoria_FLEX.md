@@ -2,7 +2,7 @@
 ---
 - **Becerra Burgos, Alejandro**
 - **Mateos Romero, David**
-- --
+---
 ## ÍNDICE
 1. **Introducción**
 2. **Desarrollo de la aplicación**
@@ -294,3 +294,35 @@ int main(int argc, char** argv) {
 ```
 
 ## - Generación del código fuente
+Para generar el código fuente tendremos que ejecutar la siguiente orden: 
+```
+flex --c++ plantilla.lex 
+```
+Obteniendo así el archivo `lex.yy.cc`. A partir de éste podemos obtener el ejecutable con la orden:
+```
+g++ lex.yy.cc -o prog
+``` 
+Para hacer el proceso de generación del ejecutable más rápido y sencillo podemos crear el siguiente makefile:
+```
+all: prog
+
+prog: lex.yy.cc
+	g++ lex.yy.cc -o prog
+
+lex.yy.cc: plantilla.lex
+	flex --c++ plantilla.lex
+clean:
+	rm prog
+	rm lex.yy.cc
+	rm *.html
+```
+
+## 3. Ejemplo de ejecución
+Como ejemplo de ejecución se propone al lector hacer uso de la aplicación para pasar esta memoria a formato HTML. Para agilizar dicha ejecución se puede hacer uso del siguiente script:
+```
+#script run.sh
+
+set -e
+make
+./prog Memoria_FLEX.md
+```
