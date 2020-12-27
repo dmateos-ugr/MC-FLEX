@@ -310,7 +310,7 @@ En este caso tenemos que comprobar que el fichero sea de tipo Markdown, es decir
 			cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
 			exit(1);
 		}
-``` 
+```
 En caso contrario, el fichero se abre y se guarda su nombre para utilizarlo en la creación del fichero HTML.
 ```C++
 		// abrimos el fichero
@@ -325,7 +325,7 @@ En caso contrario, el fichero se abre y se guarda su nombre para utilizarlo en l
 
 ```
 - El programa se ejecuta sin argumentos
- ``` 
+```
 
 En este caso, permitimos que se escriba en Markdown por la entrada estándar, es decir, directamente por teclado, y asignamos un nombre por defecto para el fichero HTML.
 
@@ -417,7 +417,7 @@ flex --c++ plantilla.lex
 Obteniendo así el archivo `lex.yy.cc`. A partir de éste podemos obtener el ejecutable con la orden:
 ```
 g++ lex.yy.cc -o prog
-``` 
+```
 Para hacer el proceso de generación del ejecutable más rápido y sencillo podemos crear el siguiente makefile:
 ```
 all: prog
