@@ -118,7 +118,7 @@ CODE_2                      `{CODE_2_CONTENT}+`
 - `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas: el contenido delimitado por tres comillas inversas al inicio y al final.
 - `CODE_1_LINE_CONTENT` -> Contenido de los cógidos en línea de 3 comillas inversas: sucesión de caracteres que no incluye 3 comillas inversas seguidas. Expresión regular obtenida a partir siguiente autómata, donde 'x' se refiere a la comilla inversa y 'c' a cualquier otro caracter
 
-![automata](./automata.png)
+![automata](https://i.imgur.com/CW6hyS0.png)
 - `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa: contenido delimitado por una comilla inversa al inicio y al final.
 - `CODE_2_CONTENT` -> Contenido de los códigos en línea de 1 comilla inversa: sucesión de caracteres que no puede incluir comillas inversas excepto si son 3 seguidas.
 
