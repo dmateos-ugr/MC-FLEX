@@ -176,11 +176,11 @@ Veamos las reglas que incluimos.
 
 En primer lugar, tenemos que consultar como se colorean las palabras en negritas en el formato HTML. Esto es, usando la etiqueta `<b>` ó `<strong>`. Nosotros solo haremos uso de la etiqueta `<b>`.
 
-Para implementar esta funcionalidad vamos a crear dos reglas, una para comenzar la escritura en negrita `BOLD` y otra para terminar la escritura en negrita `BOLD_END`. 
+Para implementar esta funcionalidad vamos a crear dos reglas, una para comenzar la escritura en negrita `BOLD` y otra para terminar la escritura en negrita `BOLD_END`.
 
-Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionaba en la sección anterior, tenemos que tener en cuenta posibles anidamientos entre distintas funcionalidades. No podemos hacer únicamente una regla para `BOLD` que escriba directamente cualquier cadena de la forma `**cadena**` en negrita, ya que en este caso la palabra **_cadena_**, es decir, `**_cadena_**` ó `***cadena***` se traduciría al fichero HTML como `<b>_cadena_<\b>` ó `<b>*cadena*<\b>`, cuando la traducción correcta sería `<b><i>cadena<\i><\b>`. Esto es solo un ejemplo, este mismo caso se puede trasladar al anidamiento con cualquier otra funcionalidad. _flex_ siempre va a aplicar la funcionalidad externa en caso de funciones anidadas, pues como se ha explicado anteriormente, _flex_ prioriza la cadena más larga posible a la que le puede aplicar una regla. 
+Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionaba en la sección anterior, tenemos que tener en cuenta posibles anidamientos entre distintas funcionalidades. No podemos hacer únicamente una regla para `BOLD` que escriba directamente cualquier cadena de la forma `**cadena**` en negrita, ya que en este caso la palabra **_cadena_**, es decir, `**_cadena_**` ó `***cadena***` se traduciría al fichero HTML como `<b>_cadena_<\b>` ó `<b>*cadena*<\b>`, cuando la traducción correcta sería `<b><i>cadena<\i><\b>`. Esto es solo un ejemplo, este mismo caso se puede trasladar al anidamiento con cualquier otra funcionalidad. _flex_ siempre va a aplicar la funcionalidad externa en caso de funciones anidadas, pues como se ha explicado anteriormente, _flex_ prioriza la cadena más larga posible a la que le puede aplicar una regla.
 
-Por tanto, las reglas nos quedarían de la siguiente forma: 
+Por tanto, las reglas nos quedarían de la siguiente forma:
 
 - Regla para la expresión regular `BOLD`
 ```C++
@@ -192,10 +192,10 @@ Por tanto, las reglas nos quedarían de la siguiente forma:
 	yyless(2);
 }
 ```
-En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la regla. Si la palabra no se estaba escribiendo en negrita, introducimos la etiqueta `<b>`, indicamos que se está escribiendo en negrita y que solo hemos procesado los dos primeros caracteres de la cadena (`**`), para que el resto se vuelva a evaluar, dejando paso así a las funcionalidades anidadas. 
+En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la regla. Si la palabra no se estaba escribiendo en negrita, introducimos la etiqueta `<b>`, indicamos que se está escribiendo en negrita y que solo hemos procesado los dos primeros caracteres de la cadena (`**`), para que el resto se vuelva a evaluar, dejando paso así a las funcionalidades anidadas.
 
 - Regla para la expresión regular `BOLD_END`
-```C++ 
+```C++
 {BOLD_END} {
 	if (!bold)
 		REJECT;
@@ -203,12 +203,111 @@ En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la 
 	bold =  false;
 }
 ```
+No se parsea en caso de no estar escribiendo en negrita. En caso contrario, se cierra la etiqueta y se indica que se ha dejado de escribir en negrita.
 
-No se parsea en caso de no estar escribiendo en negrita. En caso contrario, se cierra la etiqueta y se indica que se ha dejado de escribir en negrita. 
+#### Funcionalidad de *cursiva*
 
-#### Funcionalidad de *cursiva* 
+Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursiva, vamos a proceder análogamente al caso anterior.
 
-Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursiva, vamos a proceder análogamente al caso anterior. 
+- Regla para la expresión regular `ITALIC`
+```C++
+{ITALIC} {
+	if (italic)
+		REJECT;
+	out <<  "<i>";
+	italic =  true;
+	yyless(1);
+}
+```
+- Regla para la expresión regular `ITALIC_END`
+ ```C++
+ {ITALIC_END} {
+	if (!italic)
+		REJECT;
+	out <<  "</i>";
+	italic =  false;
+}
+```
+
+#### Funcionalidad de ~~tachado~~
+Siendo la etiqueta `<del>` utilizada en el formato HTML para la escritura en tachado, vamos a proceder análogamente a los casos anteriores.
+
+- Regla para la expresión regular `STRIKETHROUGH`
+```C++
+{STRIKETHROUGH}	{
+	if (strike)
+		REJECT;
+	out << "<del>";
+	strike = true;
+	yyless(2);
+}
+```
+- Regla para la expresión regular `STRIKETHROUGH_END`
+```C++
+	if (!strike)
+		REJECT;
+	out << "</del>";
+	strike = false;
+```
+
+#### Funcionalidad de cita
+La etiqueta `<blockquote>` es utilizada en el formato HTML para la escritura de citas.
+
+En este caso, solo necesitaremos implementar una regla para la expresión regular `BLOCKQUOTE` que se encargará de iniciar una cita. La finalización de una cita se dará con dos o más saltos de líneas consecutivos, regla la cual implementaremos posteriormente.
+
+```C++
+{BLOCKQUOTE}	{
+	if (!quote) {
+		out << "<blockquote>";
+		quote = true;
+	}
+}
+```
+En caso de que no se esté escribiendo ya una cita, se inicia e indica su escritura.
+
+#### Funcionalidad de link
+En formato HTML el link viene definido por la etiqueta `<a>` bajo la sintaxis `<a href="url">link text</a>`.
+
+Implementaremos dos reglas, una para la expresión regular `LINK` que se encargará de almacenar el link e iniciar la escritura del nombre, y otra para la expresión regular `LINK_END` que se encargará de finalizar la escritura del nombre del link.
+
+- Regla para la expresión regular `LINK`
+```C++
+{LINK}			{
+	string s(yytext);
+	int pos = s.rfind('(');
+	string link = s.substr(pos+1, yyleng - (pos + 1) - 1);
+	out << "<a href=\"" + link + "\">";
+	yyless(1);
+}
+```
+Escribimos el link e indicamos que tan solo hemos procesado el carácter `[` para que se procese el nombre del link y pueda aceptar otras funcionalidades.
+
+- Regla para la expresión regular `LINK_END`
+```C++
+{LINK_END}		{
+	out << "</a>";
+}
+```
+Terminamos la escritura del nombre del link y, con ello, la escritura completa del link.
+
+#### Funcionalidad de insertado de imágenes
+La etiqueta `<img>` es usada en formato HTML para el insertado de imágenes. Realmente no se inserta la imagen, sino que se enlaza a la página web. Es un caso especial ya que no tiene etiqueta de cerrado y requiere dos atirbutos:
+- src: especifica el enlace a la imagen.
+- alt: especifica un texto alternativo para la imagen.
+
+En este caso, una única regla va a inciar y terminar la funcionalidad. Su implementación quedaría de la siguiente forma:
+
+```C++
+{IMAGE}			{
+	string s(yytext);
+	int pos = s.find("]");
+	string alt = s.substr(2, pos-2);
+	string link = s.substr(pos+2, yyleng - (pos + 2) - 1);
+	out << "<img src=\"" << link << "\" alt=\"" << alt << "\">";
+}
+```
+Leemos el link y el texto alternativo. A continuación, escribimos la etiqueta completa.
+
 
 
 ### Sección de Procedimientos de Usuario
