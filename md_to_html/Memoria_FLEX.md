@@ -170,8 +170,9 @@ Es importante destacar que _flex_ sigue las siguientes normas para la identifica
 
 Existe una regla por defecto, que es: `. {ECHO;}`.  Esta regla se aplica en el caso de que la entrada no encaje con ninguna de las reglas. Lo que hace es imprimir en la salida (en nuestro caso el archivo HTML creado) el carácter que no encaja con ninguna regla.
 
-Vamos a incluir las siguientes reglas:
-- Funcionalidad de **negrita**
+Veamos las reglas que incluimos.
+
+#### Funcionalidad de **negrita**
 
 En primer lugar, tenemos que consultar como se colorean las palabras en negritas en el formato HTML. Esto es, usando la etiqueta `<b>` ó `<strong>`. Nosotros solo haremos uso de la etiqueta `<b>`.
 
@@ -181,7 +182,7 @@ Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionab
 
 Por tanto, las reglas nos quedarían de la siguiente forma: 
 
-	- Regla para la expresión regular `BOLD`
+- Regla para la expresión regular `BOLD`
 ```C++
 {BOLD} {
 	if (bold)
@@ -193,7 +194,7 @@ Por tanto, las reglas nos quedarían de la siguiente forma:
 ```
 En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la regla. Si la palabra no se estaba escribiendo en negrita, introducimos la etiqueta `<b>`, indicamos que se está escribiendo en negrita y que solo hemos procesado los dos primeros caracteres de la cadena (`**`), para que el resto se vuelva a evaluar, dejando paso así a las funcionalidades anidadas. 
 
-	- Regla para la expresión regular `BOLD_END`
+- Regla para la expresión regular `BOLD_END`
 ```C++ 
 {BOLD_END} {
 	if (!bold)
