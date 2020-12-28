@@ -10,6 +10,8 @@
 
 using namespace std;
 
+#define YY_BUF_SIZE 32768
+
 ofstream out;
 bool quote, bold, italic, strike;
 int header;
