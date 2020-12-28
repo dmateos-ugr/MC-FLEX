@@ -300,8 +300,8 @@ En este caso, una única regla va a inciar y terminar la funcionalidad. Su imple
 }
 ```
 Leemos el link y el texto alternativo. A continuación, escribimos la etiqueta completa.
-#### Funcionalidad para el insertado de líneas
-En formato HTML se usa la etiqueta `<hr>` para el insertado de líneas. Es una etiqueta que, al igual de la etiqueta `<img>`, prescinde de etiqueta de cerrado.
+#### Funcionalidad para el insertado de líneas horizontales
+En formato HTML se usa la etiqueta `<hr>` para el insertado de líneas horizontales. Es una etiqueta que, al igual de la etiqueta `<img>`, prescinde de etiqueta de cerrado.
 
 Como ya vimos en el bloque de alias, contamos con una expresión regular `LINE` que nos va a facilitar la implementación de esta funcionalidad. Tendremos que implementar una única regla que se encargará del insertado de línea, la cual se muestra a continuación:
 ```C++
@@ -315,6 +315,8 @@ Como se puede observar, es una funcionalidad muy sencilla de implementar. Lo ún
 Los títulos en HTML se definen con las etiquetas `<h1>` hasta `<h6>`, siendo `<h1>` el título más importante y `<h6>`el de menor relevancia y, por tanto, menor tamaño.
 
 Para la implementación de esta funcionalidad nos apoyaremos sobre el procedimiento `set_header(int)` ya mencionado en la sección de Declaraciones y el cual trataremos con más detalle en la sección de Procedimientos de Usuario.
+
+La finalización de escritura de un título se dará con uno o más saltos de líneas consecutivos, regla la cual implementaremos posteriormente.
 ```C++
 {HEADING}		{
 	set_header(yyleng);
@@ -342,7 +344,7 @@ Las listas ordenadas en HTML se representan mediante la etiqueta `<ol>`. Su impl
 }
 ```
 
-En ambos casos, intentamos añadir un elemento a la lista. Si ese elemento no es válido, no se parsea.
+En ambos casos, intentamos añadir un elemento a la lista. Si ese elemento no es válido, no se parsea. La finalización de una lista se dará con dos o más saltos de líneas consecutivos, regla la cual implementaremos posteriormente.
 #### Funcionalidad para el insertado de código
 En HTML el mostrado de código se representa mediante la etiqueta `<code>`.
 
@@ -350,7 +352,6 @@ La implementación de esta funcionalidad es bastante compleja ya que tenemos que
 - Para una línea de código representada entre 3 comillas inversas en Mardown
 ``` C++
 {CODE_1_LINE}	{
-	// Leer el código, escaparlo e introducir etiqueta
 	string code = substr(yytext, 3, yyleng - 6);
 	escape_html(code);
 	out << "<code>" << code << "</code>";
@@ -377,13 +378,42 @@ En nuestra aplicación vamos a prescindir del coloreado del código según el le
 - Para una línea de código representada entre simples comillas inversas en Mardown
 ```C++
 {CODE_2}		{
-	// Leer el código, escaparlo e introducir etiqueta
 	string code = substr(yytext, 1, yyleng - 2);
 	escape_html(code);
 	out << "<code>" << code << "</code>";
 }
 ```
 Análogo a la regla `CODE_1_LINE`.
+
+#### Saltos de línea
+Los saltos de línea van a determinar la finalización de escritura de títulos, citas y listas.
+- Un salto de línea
+```C++
+\n				{
+	out << endl;
+	if (!end_headers())
+		out << "<br>" << endl;
+}
+```
+Escribimos en el fichero HTML un salto de línea. Si se estaba escribiendo un título se finaliza su escritura. En caso contrario, introducimos una etiqueta _line break_.
+
+- Dos o más saltos de línea consecutivos
+```C++
+\n{2,}			{
+	out << endl;
+	if (quote) {
+		out << "</blockquote>" << endl;
+		quote = false;
+	}
+	bool remove_br = end_headers();
+	remove_br |= end_lists();
+	out << endl;
+	if (!remove_br)
+		out << "<br><br>" << endl;
+}
+```
+Escribimos dos saltos de línea. Se finalizan las escrituras de citas, títulos y listas. Si no se estaba escribiendo ningún título ó lista tenemos que introducir dos etiquetas _line break_.
+
 
 ### Sección de Procedimientos de Usuario
 En esta sección escribiremos en C++ sin ninguna restricción aquellos procedimientos que hayamos necesitado en la sección de Reglas. Todo lo que aparezca en esta sección será incorporado al final del fichero fuente generado.
