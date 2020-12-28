@@ -693,7 +693,7 @@ set -e
 make
 ./prog Memoria_FLEX.md
 ```
-Entre los archivos proporcionados puede encontrar el resultado en HTML de esta operación, así como su exportación a PDF para una lectura más fácil. Debería ser prácticamente idéntico al PDF original, excepto por la ausencia de color en los trozos de código.
+Entre los archivos proporcionados puede encontrar el resultado en HTML de esta operación. Debería ser prácticamente idéntico al PDF original, excepto por la ausencia de color en los trozos de código.
 
 ## 4. Reflexiones
 En esta práctica hemos aprendido a usar flex, y a pesar de sólo conocer sus funcionalidades más básicas, hemos podido construir una aplicación relativamente compleja para exportar código Markdown a HTML. De esta forma le dotamos de un estilo específico y de capacidad para ser guardado en otros formatos más universales, como puede ser PDF.
