@@ -90,20 +90,20 @@ En este bloque definiremos las expresiones regulares necesarias para identificar
 Es necesario que al principio de cada línea aparezca el nombre con el cual queremos identificar la expresión regular, seguido de la propia expresión regular con **al menos** una tabulación.
 
 En este bloque incluimos:
-- `BOLD \*\*.+\*\*`  y `BOLD_END \*\*` para poder identificar las cadenas en **negrita**.
-- `ITALIC (\_[^\*]+\_)|(\*[^\*]+\*)` y `ITALIC_END \_|\*` para poder identificar las cadenas en *cursiva*.
-- `STRIKETHROUGH \~\~.+\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~.
-- `BLOCKQUOTE ^\>` para poder identificar las
-> citas.
-- `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/).
+- `BOLD \*\*.+\*\*`  y `BOLD_END \*\*` para poder identificar las cadenas en **negrita**: una sucesión de caracteres delimitada por dos asteriscos antes y después.
+- `ITALIC (\_[^\*]+\_)|(\*[^\*]+\*)` y `ITALIC_END \_|\*` para poder identificar las cadenas en *cursiva*: una sucesión de caracteres delimitada por un asterisco antes y después.
+- `STRIKETHROUGH \~\~.+\~\~` y `STRIKETHROUGH_END \~\~` para poder identificar las cadenas ~~tachadas~~: una sucesión de caracteres delimitada por dos virgulillas antes y después.
+- `BLOCKQUOTE ^\>` para poder identificar las citas, que comienzan con un signo "mayor que", y se extienden hasta que se encuentren dos saltos de línea.
+> Ejemplo de cita
+- `LINK \[.*\]\(.*\)` y `LINK_END \]\(.*\)` para identificar los [links](https://stackedit.io/): sucesión de caracteres delimitada por corchetes (texto) seguida de sucesión de caracteres delimitada por paréntesis (enlace).
 - `PAD " "*` para identificar espacios en blanco.
-- `LINE_1 ({PAD}\-{PAD}){3,}\n` y `LINE_2 ({PAD}\*{PAD}){3,}\n` para poder identificar las líneas:
+- `LINE_1 ({PAD}\-{PAD}){3,}\n` y `LINE_2 ({PAD}\*{PAD}){3,}\n` para poder identificar las líneas: sucesiones de mínimo tres guiones o asteriscos con posibles espacios en medio. Ejemplo:
 - --
-- `LINE {LINE_1}|{LINE_2}` para facilitar la asignación de funcionalidad en la sección de Reglas y evitar repetir código.
-- `HEADING ^#{1,6}` para poder identificar los distintos tipos de títulos.
-- `IMAGE \!{LINK}` para poder identrificar las imágenes.
-- `UNORDERED_LIST ^\t*\-" "` para poder identificar las listas no enumeradas.
-- `ORDERED_LIST ^\t*[0-9]+\." "` para poder identificar las listas enumeradas.
+- `LINE {LINE_1}|{LINE_2}` para identificar los dos tipos de línea descritos anteriormente (guiones o asteriscos).
+- `HEADING ^#{1,6}` para poder identificar los distintos tipos de títulos, que comienzan con una sucesión de como mucho seis almohadillas, y terminan con un salto de línea.
+- `IMAGE \!{LINK}` para poder identificar las imágenes, que son iguales que los enlaces pero con una exclamación al inicio.
+- `UNORDERED_LIST ^\t*\-" "` para poder identificar las listas no enumeradas: sucesión de tabuladores posiblemente nula para los casos de listas anidadas seguida de un guión y un espacio.
+- `ORDERED_LIST ^\t*[0-9]+\." "` para poder identificar las listas enumeradas: idénticas a las no enumeradas pero con un número en vez de un guión. Markdown ignora ese número y simplementa numera en orden ascendente.
 - Para la identificación de código incluimos 5 expresiones regulares distintas debido a la gran diversidad presentada por Markdown en este ámbito, así como su complejidad de implementación.
 ```
 CODE_1_LINE_CONTENT				(`{0,2}[^`])*`{0,2}
@@ -113,11 +113,12 @@ CODE_1 						^```.*\n(.|\n)*```\n
 CODE_2_CONTENT					([^`]|"```")+
 CODE_2						`{CODE_2_CONTENT}+`
 ```
-	- `CODE_1` -> Para identificar los códigos en forma de bloque
-	- `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas
-	- `CODE_1_LINE_CONTENT` -> Puede haber 1 o 2 comillas inversas seguidas dentro del código (entre 3 comillas inversas) pero no 3
-	- `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa
-	- `CODE_2_CONTENT` -> Dentro de un código de 1 comilla inversa puede haber 3 comillas inversas seguidas pero no 1.
+	- `CODE_1` -> Para identificar los códigos en forma de bloque: una sucesión de líneas delimitada por tres comillas inversas seguidas de un salto de línea al inicio y al final.
+	- `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas: el contenido delimitado por tres comillas inversas al inicio y al final.
+	- `CODE_1_LINE_CONTENT` -> Contenido de los cógidos en línea de 3 comillas inversas: sucesión de caracteres que no incluye 3 comillas inversas seguidas. Expresión regular obtenida a partir siguiente autómata:
+	![automata](./automata.png)
+	- `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa: contenido delimitado por una comilla inversa al inicio y al final.
+	- `CODE_2_CONTENT` -> Contenido de los códigos en línea de 1 comilla inversa: sucesión de caracteres que no puede incluir comillas inversas excepto si son 3 seguidas.
 
 Las expresiones regulares *FUNCIONALIDAD*_END son necesarias para cubrir el problema de anidamiento de funcionalidades. En la sección de Reglas se mostrará más a fondo el motivo de su necesidad.
 
