@@ -71,6 +71,8 @@ HEADING			^#{1,6}
  /* Sección de reglas */
 
 \n{2,}			{
+	// Dos o más saltos de línea: cerrar quote, headers y listas,
+	// y añadir <br> si es necesario
 	out << endl;
 	if (quote) {
 		out << "</blockquote>" << endl;
@@ -84,57 +86,75 @@ HEADING			^#{1,6}
 }
 
 \n				{
+	// Un salto de línea: cerrar headers (quote y listas siguen abiertas),
+	// y añadir <br> si es necesario
 	out << endl;
 	if (!end_headers())
 		out << "<br>" << endl;
 }
 
 {BOLD}			{
+	// No parsearlo si ya estamos en negrita
 	if (bold)
 		REJECT;
+	// Abrir la etiqueta e indicar que sólo hemos procesado los dos primeros
+	// caracteres (**), para que el resto se procese
 	out << "<b>";
 	bold = true;
 	yyless(2);
 }
 
 {BOLD_END}		{
+	// No parsearlo si no estamos en negrita
 	if (!bold)
 		REJECT;
+	// Cerrar la etiqueta
 	out << "</b>";
 	bold = false;
 }
 
 {ITALIC}		{
+	// No parsearlo si ya estamos en itálica
 	if (italic)
 		REJECT;
+	// Abrir la etiqueta e indicar que sólo hemos procesado el primer
+	// caracter (*)
 	out << "<i>";
 	italic = true;
 	yyless(1);
 }
 
 {ITALIC_END}	{
+	// No parsearlo si no estamos en itálica
 	if (!italic)
 		REJECT;
+	// Cerrar la etiqueta
 	out << "</i>";
 	italic = false;
 }
 
 {STRIKETHROUGH}	{
+	// No parsearlo si ya estamos en strike
 	if (strike)
 		REJECT;
+	// Abrir la etiqueta e indicar que sólo hemos procesado los dos primeros
+	// caracteres (~~)
 	out << "<del>";
 	strike = true;
 	yyless(2);
 }
 
 {STRIKETHROUGH_END}	{
+	// No parsearlo si no estamos en strike
 	if (!strike)
 		REJECT;
+	// Cerrar la etiqueta
 	out << "</del>";
 	strike = false;
 }
 
 {BLOCKQUOTE}	{
+	// No hacer nada si ya estamos en quote. Si no, abrir etiqueta
 	if (!quote) {
 		out << "<blockquote>";
 		quote = true;
@@ -142,18 +162,23 @@ HEADING			^#{1,6}
 }
 
 {LINK}			{
+	// Leer el link que se encuentra al final, abrir la etiqueta e indicar
+	// que sólo hemos leído el primer '[' para que se procese el texto
 	string s(yytext);
 	int pos = s.rfind('(');
 	string link = s.substr(pos+1, yyleng - (pos + 1) - 1);
 	out << "<a href=\"" + link + "\">";
-	yyless(1); // sólo hemos consumido el '['
+	yyless(1);
 }
 
 {LINK_END}		{
+	// Cerrar etiqueta
 	out << "</a>";
 }
 
 {IMAGE}			{
+	// Leer el link y el texto alternativo y escribir la etiqueta.
+	// En este caso el texto no se procesa
 	string s(yytext);
 	int pos = s.find("]");
 	string alt = s.substr(2, pos-2);
@@ -162,43 +187,55 @@ HEADING			^#{1,6}
 }
 
 {LINE}			{
+	// Cerrar las listas e introducir etiqueta
 	end_lists();
 	out << "<hr>" << endl;
 }
 
 {CODE_1_LINE}	{
+	// Leer el código, escaparlo e introducir etiqueta
 	string code = substr(yytext, 3, yyleng - 6);
 	escape_html(code);
 	out << "<code>" << code << "</code>";
 }
 
 {CODE_1} 		{
+	// Leer el código delimitado por los saltos de línea después del primer ```
+	// y antes del segundo ```, escaparlo e introducir etiquetas.
 	string s(yytext);
 	size_t start = s.find('\n') + 1;
 	size_t end = s.find("\n```") + 1;
 	string code = s.substr(start, end - start);
 	escape_html(code);
 	out << "<pre><code>" << code << "</code></pre>";
+
+	// Ya que flex escoge la expresión regular más grande, puede que dentro de
+	// este CODE_1 haya varios más. Por ello es necesario delimitarlo nosotros
+	// e indicarle a flex que siga procesando el resto.
 	if (end != yyleng - 3)
 		yyless(start + end-start + 3);
 }
 
 {CODE_2}		{
+	// Leer el código, escaparlo e introducir etiqueta
 	string code = substr(yytext, 1, yyleng - 2);
 	escape_html(code);
 	out << "<code>" << code << "</code>";
 }
 
 {HEADING}		{
+	// Añadir la etiqueta del header correspondiente
 	set_header(yyleng);
 }
 
 {UNORDERED_LIST}	{
+	// Intentar añadir elemento a la lista. Si no es válido, no parsearlo
 	if (!handle_list(yytext, false))
 		REJECT;
 }
 
 {ORDERED_LIST}		{
+	// Intentar añadir elemento a la lista. Si no es válido, no parsearlo
 	if (!handle_list(yytext, true))
 		REJECT;
 }
@@ -246,6 +283,7 @@ bool end_lists(int n) {
 }
 
 void set_header(int n) {
+	// Sólo añadir la etiqueta si no estamos en ningún header
 	if (!header) {
 		header = n;
 		out << "<h" << n << ">";
@@ -253,6 +291,7 @@ void set_header(int n) {
 }
 
 bool end_headers(){
+	// Cerrar header si hay alguno abierto
 	if (!header)
 		return false;
 	out << "</h" << header << ">";
@@ -261,6 +300,7 @@ bool end_headers(){
 }
 
 void escape_html(string& s) {
+	// Crear copia de `s` pero con los caracteres reemplazados
 	string buffer;
 	buffer.reserve(s.size());
 	for (size_t pos = 0; pos != s.size(); ++pos) {
@@ -277,6 +317,7 @@ void escape_html(string& s) {
 }
 
 void generate_html(yyFlexLexer& flujo, const string& title) {
+	// Escribir cabeceras
 	out <<
 	  "<!DOCTYPE html>\n"
 	  "<html>\n"
@@ -286,15 +327,17 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 	  "</head>\n"
 	  "<body class=\"stackedit__html\">\n";
 
+	// Escribir cuerpo
 	flujo.yylex();
 
+	// Cerrar archivo
 	out <<
-	  "</p>\n"
 	  "</body>\n"
 	  "</html>\n";
 }
 
 void ignore_utf8_header(istream& in) {
+	// Ignorar esos primeros caracteres que indican uso de codificación UTF-8
 	int header[] = {0xEF, 0xBB, 0xBF};
 	for (int i = 0; i < sizeof(header)/sizeof(header[0]); i++) {
 		if (in.peek() != header[i])
