@@ -106,12 +106,12 @@ En este bloque incluimos:
 - `ORDERED_LIST ^\t*[0-9]+\." "` para poder identificar las listas enumeradas: idénticas a las no enumeradas pero con un número en vez de un guión. Markdown ignora ese número y simplementa numera en orden ascendente.
 - Para la identificación de código incluimos 5 expresiones regulares distintas debido a la gran diversidad presentada por Markdown en este ámbito, así como su complejidad de implementación.
 ```
-CODE_1_LINE_CONTENT				(`{0,2}[^`])*`{0,2}
-CODE_1_LINE					```{CODE_1_LINE_CONTENT}```
-CODE_1 						^```.*\n(.|\n)*```\n
+CODE_1_LINE_CONTENT         (`{0,2}[^`])*`{0,2}
+CODE_1_LINE                 ```{CODE_1_LINE_CONTENT}```
+CODE_1                      ^```.*\n(.|\n)*```\n
 
-CODE_2_CONTENT					([^`]|"```")+
-CODE_2						`{CODE_2_CONTENT}+`
+CODE_2_CONTENT              ([^`]|"```")+
+CODE_2                      `{CODE_2_CONTENT}+`
 ```
 	- `CODE_1` -> Para identificar los códigos en forma de bloque: una sucesión de líneas delimitada por tres comillas inversas seguidas de un salto de línea al inicio y al final.
 	- `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas: el contenido delimitado por tres comillas inversas al inicio y al final.
@@ -125,32 +125,32 @@ Las expresiones regulares *FUNCIONALIDAD*_END son necesarias para cubrir el prob
 Finalmente, el bloque de alias nos quedaría de la siguiente forma:
 
 ```
-BOLD						\*\*.+\*\*
-BOLD_END					\*\*
-ITALIC						(\_[^\*]+\_)|(\*[^\*]+\*)
-ITALIC_END					\_|\*
-STRIKETHROUGH					\~\~.+\~\~
-STRIKETHROUGH_END				\~\~
-BLOCKQUOTE					^\>
+BOLD                        \*\*.+\*\*
+BOLD_END                    \*\*
+ITALIC                      (\_[^\*]+\_)|(\*[^\*]+\*)
+ITALIC_END                  \_|\*
+STRIKETHROUGH               \~\~.+\~\~
+STRIKETHROUGH_END           \~\~
+BLOCKQUOTE                  ^\>
 
-CODE_1_LINE_CONTENT				(`{0,2}[^`])*`{0,2}
-CODE_1_LINE					```{CODE_1_LINE_CONTENT}```
-CODE_1 						^```.*\n(.|\n)*```\n
+CODE_1_LINE_CONTENT         (`{0,2}[^`])*`{0,2}
+CODE_1_LINE                 ```{CODE_1_LINE_CONTENT}```
+CODE_1                      ^```.*\n(.|\n)*```\n
 
-CODE_2_CONTENT					([^`]|"```")+
-CODE_2						`{CODE_2_CONTENT}+`
+CODE_2_CONTENT              ([^`]|"```")+
+CODE_2                      `{CODE_2_CONTENT}+`
 
-PAD						" "*
-LINE_1						({PAD}\-{PAD}){3,}\n
-LINE_2						({PAD}\*{PAD}){3,}\n
-LINE						{LINE_1}|{LINE_2}
-LINK						\[.*\]\(.*\)
-LINK_END					\]\(.*\)
-IMAGE						\!{LINK}
-UNORDERED_LIST					^\t*\-" "
-ORDERED_LIST					^\t*[0-9]+\." "
+PAD                         " "*
+LINE_1                      ({PAD}\-{PAD}){3,}\n
+LINE_2                      ({PAD}\*{PAD}){3,}\n
+LINE                        {LINE_1}|{LINE_2}
+LINK                        \[.*\]\(.*\)
+LINK_END                    \]\(.*\)
+IMAGE                       \!{LINK}
+UNORDERED_LIST              ^\t*\-" "
+ORDERED_LIST                ^\t*[0-9]+\." "
 
-HEADING						^#{1,6}
+HEADING                     ^#{1,6}
 ```
 
 
