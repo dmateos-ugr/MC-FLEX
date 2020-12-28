@@ -115,7 +115,8 @@ CODE_2                      `{CODE_2_CONTENT}+`
 ```
 - `CODE_1` -> Para identificar los códigos en forma de bloque: una sucesión de líneas delimitada por tres comillas inversas seguidas de un salto de línea al inicio y al final.
 - `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas: el contenido delimitado por tres comillas inversas al inicio y al final.
-- `CODE_1_LINE_CONTENT` -> Contenido de los cógidos en línea de 3 comillas inversas: sucesión de caracteres que no incluye 3 comillas inversas seguidas. Expresión regular obtenida a partir siguiente autómata:
+- `CODE_1_LINE_CONTENT` -> Contenido de los cógidos en línea de 3 comillas inversas: sucesión de caracteres que no incluye 3 comillas inversas seguidas. Expresión regular obtenida a partir siguiente autómata, donde 'x' se refiere a la comilla inversa y 'c' a cualquier otro caracter
+
 ![automata](./automata.png)
 - `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa: contenido delimitado por una comilla inversa al inicio y al final.
 - `CODE_2_CONTENT` -> Contenido de los códigos en línea de 1 comilla inversa: sucesión de caracteres que no puede incluir comillas inversas excepto si son 3 seguidas.
@@ -178,7 +179,11 @@ En primer lugar, tenemos que consultar como se colorean las palabras en negritas
 
 Para implementar esta funcionalidad vamos a crear dos reglas, una para comenzar la escritura en negrita `BOLD` y otra para terminar la escritura en negrita `BOLD_END`.
 
-Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionaba en la sección anterior, tenemos que tener en cuenta posibles anidamientos entre distintas funcionalidades. No podemos hacer únicamente una regla para `BOLD` que escriba directamente cualquier cadena de la forma `**cadena**` en negrita, ya que en este caso la palabra **_cadena_**, es decir, `**_cadena_**` ó `***cadena***` se traduciría al fichero HTML como `<b>_cadena_<\b>` ó `<b>*cadena*<\b>`, cuando la traducción correcta sería `<b><i>cadena<\i><\b>`. Esto es solo un ejemplo, este mismo caso se puede trasladar al anidamiento con cualquier otra funcionalidad. _flex_ siempre va a aplicar la funcionalidad externa en caso de funciones anidadas, pues como se ha explicado anteriormente, _flex_ prioriza la cadena más larga posible a la que le puede aplicar una regla.
+Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionaba en la sección anterior, tenemos que tener en cuenta posibles anidamientos entre distintas funcionalidades. No podemos hacer únicamente una regla para `BOLD` que escriba directamente cualquier cadena de la forma `**cadena**` en negrita, ya que en este caso la palabra **_cadena_**, es decir, `**_cadena_**` ó `***cadena***` se traduciría al fichero HTML como `<b>_cadena_<\b>` ó `<b>*cadena*<\b>`, cuando la traducción correcta sería `<b><i>cadena<\i><\b>`. Esto es solo un ejemplo, este mismo caso se puede trasladar al anidamiento con cualquier otra funcionalidad.
+
+Por otra parte, tampoco podemos tener una sola regla `**` que cambie una variable booleana y que abra o cierre la etiqueta dependiendo de esta, ya que ** es una cadena válida (como se puede observar) que no debería interpretarse como negrita.
+
+_flex_ siempre va a aplicar la funcionalidad externa en caso de funciones anidadas, pues como se ha explicado anteriormente, _flex_ prioriza la cadena más larga posible a la que le puede aplicar una regla.
 
 Por tanto, las reglas nos quedarían de la siguiente forma:
 - Regla para la expresión regular `BOLD`

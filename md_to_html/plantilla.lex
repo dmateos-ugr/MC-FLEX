@@ -326,6 +326,11 @@ void generate_html(yyFlexLexer& flujo, const string& title) {
 	  "<head>\n"
 	  "<title>" << title << "</title>\n" <<
 	  "<link rel=\"stylesheet\" href=\"https://stackedit.io/style.css\">"
+	  "<style>"
+	  "body {"
+	  "text-align: justify;"
+	  "}"
+	  "</style>"
 	  "</head>\n"
 	  "<body class=\"stackedit__html\">\n";
 
