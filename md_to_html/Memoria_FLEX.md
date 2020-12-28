@@ -475,7 +475,7 @@ clean:
 ```
 
 ## 3. Ejemplo de ejecución
-Como ejemplo de ejecución se propone al lector hacer uso de la aplicación para pasar esta memoria a formato HTML. Para agilizar dicha ejecución se puede hacer uso del siguiente script:
+Esta memoria se ha realizado en Markdown. Como ejemplo de ejecución se propone al lector hacer uso de la aplicación para pasarla a formato HTML. Para agilizar dicha ejecución se puede hacer uso del siguiente script:
 ```
 #script run.sh
 
@@ -483,3 +483,11 @@ set -e
 make
 ./prog Memoria_FLEX.md
 ```
+Entre los archivos proporcionados puede encontrar el resultado en HTML de esta operación, así como su exportación a PDF para una lectura más fácil. Debería ser prácticamente idéntico al PDF original, excepto por la ausencia de color en los trozos de código.
+
+## 4. Reflexiones
+En esta práctica hemos aprendido a usar flex, y a pesar de sólo conocer sus funcionalidades más básicas, hemos podido construir una aplicación relativamente compleja para exportar código Markdown a HTML. De esta forma le dotamos de un estilo específico y de capacidad para ser guardado en otros formatos más universales, como puede ser PDF.
+
+Hemos tenido algunas dificultades, siendo la mayor de ellas la ausencia de un estándar común para Markdown y las consecuentes diferencias entre los distintos motores existentes que intentan llevar a cabo la tarea descrita. Hemos sufrido particularmente con las variadas formas de mostrar código en Markdown (comillas inversas).
+
+Sin embargo, al tener esta memoria como ejemplo de fichero Markdown que explota al máximo sus funcionalidades, creemos haber conseguido la correctitud de nuestros procedimientos.
