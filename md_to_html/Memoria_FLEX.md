@@ -181,7 +181,6 @@ Para implementar esta funcionalidad vamos a crear dos reglas, una para comenzar 
 Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionaba en la sección anterior, tenemos que tener en cuenta posibles anidamientos entre distintas funcionalidades. No podemos hacer únicamente una regla para `BOLD` que escriba directamente cualquier cadena de la forma `**cadena**` en negrita, ya que en este caso la palabra **_cadena_**, es decir, `**_cadena_**` ó `***cadena***` se traduciría al fichero HTML como `<b>_cadena_<\b>` ó `<b>*cadena*<\b>`, cuando la traducción correcta sería `<b><i>cadena<\i><\b>`. Esto es solo un ejemplo, este mismo caso se puede trasladar al anidamiento con cualquier otra funcionalidad. _flex_ siempre va a aplicar la funcionalidad externa en caso de funciones anidadas, pues como se ha explicado anteriormente, _flex_ prioriza la cadena más larga posible a la que le puede aplicar una regla.
 
 Por tanto, las reglas nos quedarían de la siguiente forma:
-
 - Regla para la expresión regular `BOLD`
 ```C++
 {BOLD} {
@@ -206,9 +205,7 @@ En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la 
 No se parsea en caso de no estar escribiendo en negrita. En caso contrario, se cierra la etiqueta y se indica que se ha dejado de escribir en negrita.
 
 #### Funcionalidad de *cursiva*
-
 Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursiva, vamos a proceder análogamente al caso anterior.
-
 - Regla para la expresión regular `ITALIC`
 ```C++
 {ITALIC} {
@@ -220,8 +217,8 @@ Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursi
 }
 ```
 - Regla para la expresión regular `ITALIC_END`
- ```C++
- {ITALIC_END} {
+```C++
+{ITALIC_END} {
 	if (!italic)
 		REJECT;
 	out <<  "</i>";
@@ -231,7 +228,6 @@ Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursi
 
 #### Funcionalidad de ~~tachado~~
 Siendo la etiqueta `<del>` utilizada en el formato HTML para la escritura en tachado, vamos a proceder análogamente a los casos anteriores.
-
 - Regla para la expresión regular `STRIKETHROUGH`
 ```C++
 {STRIKETHROUGH}	{
@@ -254,7 +250,6 @@ Siendo la etiqueta `<del>` utilizada en el formato HTML para la escritura en tac
 La etiqueta `<blockquote>` es utilizada en el formato HTML para la escritura de citas.
 
 En este caso, solo necesitaremos implementar una regla para la expresión regular `BLOCKQUOTE` que se encargará de iniciar una cita. La finalización de una cita se dará con dos o más saltos de líneas consecutivos, regla la cual implementaremos posteriormente.
-
 ```C++
 {BLOCKQUOTE}	{
 	if (!quote) {
@@ -264,7 +259,6 @@ En este caso, solo necesitaremos implementar una regla para la expresión regula
 }
 ```
 En caso de que no se esté escribiendo ya una cita, se inicia e indica su escritura.
-
 #### Funcionalidad de link
 En formato HTML el link viene definido por la etiqueta `<a>` bajo la sintaxis `<a href="url">link text</a>`.
 
@@ -296,7 +290,6 @@ La etiqueta `<img>` es usada en formato HTML para el insertado de imágenes. Rea
 - alt: especifica un texto alternativo para la imagen.
 
 En este caso, una única regla va a inciar y terminar la funcionalidad. Su implementación quedaría de la siguiente forma:
-
 ```C++
 {IMAGE}			{
 	string s(yytext);
@@ -307,8 +300,90 @@ En este caso, una única regla va a inciar y terminar la funcionalidad. Su imple
 }
 ```
 Leemos el link y el texto alternativo. A continuación, escribimos la etiqueta completa.
+#### Funcionalidad para el insertado de líneas
+En formato HTML se usa la etiqueta `<hr>` para el insertado de líneas. Es una etiqueta que, al igual de la etiqueta `<img>`, prescinde de etiqueta de cerrado.
 
+Como ya vimos en el bloque de alias, contamos con una expresión regular `LINE` que nos va a facilitar la implementación de esta funcionalidad. Tendremos que implementar una única regla que se encargará del insertado de línea, la cual se muestra a continuación:
+```C++
+{LINE}			{
+	end_lists();
+	out << "<hr>" << endl;
+}
+```
+Como se puede observar, es una funcionalidad muy sencilla de implementar. Lo único que tenemos que tener en cuenta es, que en caso de estar dentro de un conjunto de listas, tendremos que finalizarlas.
+#### Funcionalidad para el insertado de títulos
+Los títulos en HTML se definen con las etiquetas `<h1>` hasta `<h6>`, siendo `<h1>` el título más importante y `<h6>`el de menor relevancia y, por tanto, menor tamaño.
 
+Para la implementación de esta funcionalidad nos apoyaremos sobre el procedimiento `set_header(int)` ya mencionado en la sección de Declaraciones y el cual trataremos con más detalle en la sección de Procedimientos de Usuario.
+```C++
+{HEADING}		{
+	set_header(yyleng);
+}
+```
+#### Funcionalidad para el uso de listas
+Para la implementación de esta funcionalidad nos apoyaremos sobre el procedimiento `handle_list(const char* yytext, bool ordered)` ya mencionado en la sección de Declaraciones y el cual trataremos con más detalle en la sección de Procedimientos de Usuario.
+
+Los elementos de una lista en HTML se representan mediante la etiqueta `<li>`. Sin embargo, la representación de la lista varía según si es ordenada o no.
+- Listas sin orden
+Las listas sin orden en HTML se representan mediante la etiqueta `<ul>`. Su implementación vendrá dada por la siguiente regla:
+```C++
+{UNORDERED_LIST}	{
+	if (!handle_list(yytext, false))
+		REJECT;
+}
+```
+
+- Listas enumeradas
+Las listas ordenadas en HTML se representan mediante la etiqueta `<ol>`. Su implementación vendrá dada por la siguiente regla:
+```C++
+{ORDERED_LIST}		{
+	if (!handle_list(yytext, true))
+		REJECT;
+}
+```
+
+En ambos casos, intentamos añadir un elemento a la lista. Si ese elemento no es válido, no se parsea.
+#### Funcionalidad para el insertado de código
+En HTML el mostrado de código se representa mediante la etiqueta `<code>`.
+
+La implementación de esta funcionalidad es bastante compleja ya que tenemos que tener en cuenta todas las posibles formas de representar código en formato Markdown y tener cuidado con todas las excepciones que presenta. Es por ello que vamos a necesitar implementar una regla por cada modelo de representación existente en Mardown. A su vez, cabe destacar que en todas ellas nos apoyaremos sobre el procedimiento `escape_html(string& s)` ya mencionado en la sección de Declaraciones y el cual trataremos con más detalle en la sección de Procedimientos de Usuario. Incluimos así las siguientes reglas:
+- Para una línea de código representada entre 3 comillas inversas en Mardown
+``` C++
+{CODE_1_LINE}	{
+	// Leer el código, escaparlo e introducir etiqueta
+	string code = substr(yytext, 3, yyleng - 6);
+	escape_html(code);
+	out << "<code>" << code << "</code>";
+}
+```
+Leemos el código, cambiamos los caracteres reservados de HTML y escribimos la etiqueta con el código.
+
+- Para un bloque de código
+```C++
+{CODE_1} 		{
+	string s(yytext);
+	size_t start = s.find('\n') + 1;
+	size_t end = s.find("\n```") + 1;
+	string code = s.substr(start, end - start);
+	escape_html(code);
+	out << "<pre><code>" << code << "</code></pre>";
+
+	if (end != yyleng - 3)
+		yyless(start + end-start + 3);
+}
+```
+En nuestra aplicación vamos a prescindir del coloreado del código según el lenguaje utilizado, luego omitimos la cadena que representa el tipo de lenguaje. Leemos el código delimitado por los saltos de línea después de las 3 primeras comillas inversas hasta encontrar otras 3 comillas inversas. A continuación, escribimos la etiqueta con dicho código leído en el fichero HTML. Posteriormente, como _flex_ escoge la expresión regular más grande, puede que dentro de este bloque de código haya varios más, por ello es necesario hacer una delimitación manual e indicarle a flex que en ese caso siga procesando el resto.
+
+- Para una línea de código representada entre simples comillas inversas en Mardown
+```C++
+{CODE_2}		{
+	// Leer el código, escaparlo e introducir etiqueta
+	string code = substr(yytext, 1, yyleng - 2);
+	escape_html(code);
+	out << "<code>" << code << "</code>";
+}
+```
+Análogo a la regla `CODE_1_LINE`.
 
 ### Sección de Procedimientos de Usuario
 En esta sección escribiremos en C++ sin ninguna restricción aquellos procedimientos que hayamos necesitado en la sección de Reglas. Todo lo que aparezca en esta sección será incorporado al final del fichero fuente generado.
