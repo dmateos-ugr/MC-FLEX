@@ -13,6 +13,7 @@
 		- **Sección de Procedimientos de Usuario**
 	- **Generación del código fuente**
 3. **Ejemplo de ejecución**
+4. **Reflexiones**
 
 
 ## 1. INTRODUCCIÓN
