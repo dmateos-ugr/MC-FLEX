@@ -113,12 +113,12 @@ CODE_1                      ^```.*\n(.|\n)*```\n
 CODE_2_CONTENT              ([^`]|"```")+
 CODE_2                      `{CODE_2_CONTENT}+`
 ```
-	- `CODE_1` -> Para identificar los códigos en forma de bloque: una sucesión de líneas delimitada por tres comillas inversas seguidas de un salto de línea al inicio y al final.
-	- `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas: el contenido delimitado por tres comillas inversas al inicio y al final.
-	- `CODE_1_LINE_CONTENT` -> Contenido de los cógidos en línea de 3 comillas inversas: sucesión de caracteres que no incluye 3 comillas inversas seguidas. Expresión regular obtenida a partir siguiente autómata:
-	![automata](./automata.png)
-	- `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa: contenido delimitado por una comilla inversa al inicio y al final.
-	- `CODE_2_CONTENT` -> Contenido de los códigos en línea de 1 comilla inversa: sucesión de caracteres que no puede incluir comillas inversas excepto si son 3 seguidas.
+- `CODE_1` -> Para identificar los códigos en forma de bloque: una sucesión de líneas delimitada por tres comillas inversas seguidas de un salto de línea al inicio y al final.
+- `CODE_1_LINE`-> Para identificar los códigos en línea de 3 comillas inversas: el contenido delimitado por tres comillas inversas al inicio y al final.
+- `CODE_1_LINE_CONTENT` -> Contenido de los cógidos en línea de 3 comillas inversas: sucesión de caracteres que no incluye 3 comillas inversas seguidas. Expresión regular obtenida a partir siguiente autómata:
+![automata](./automata.png)
+- `CODE_2`-> Para identificar los códigos en línea de 1 comilla inversa: contenido delimitado por una comilla inversa al inicio y al final.
+- `CODE_2_CONTENT` -> Contenido de los códigos en línea de 1 comilla inversa: sucesión de caracteres que no puede incluir comillas inversas excepto si son 3 seguidas.
 
 Las expresiones regulares *FUNCIONALIDAD*_END son necesarias para cubrir el problema de anidamiento de funcionalidades. En la sección de Reglas se mostrará más a fondo el motivo de su necesidad.
 
@@ -206,7 +206,7 @@ En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la 
 
 No se parsea en caso de no estar escribiendo en negrita. En caso contrario, se cierra la etiqueta y se indica que se ha dejado de escribir en negrita. 
 
-- Funcionalidad de *cursiva* 
+#### Funcionalidad de *cursiva* 
 
 Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursiva, vamos a proceder análogamente al caso anterior. 
 
