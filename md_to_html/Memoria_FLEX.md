@@ -170,8 +170,44 @@ Es importante destacar que _flex_ sigue las siguientes normas para la identifica
 
 Existe una regla por defecto, que es: `. {ECHO;}`.  Esta regla se aplica en el caso de que la entrada no encaje con ninguna de las reglas. Lo que hace es imprimir en la salida (en nuestro caso el archivo HTML creado) el carácter que no encaja con ninguna regla.
 
-Vamos a necesitar incluir las siguientes reglas:
-- Por completar
+Vamos a incluir las siguientes reglas:
+- Funcionalidad de **negrita**
+
+En primer lugar, tenemos que consultar como se colorean las palabras en negritas en el formato HTML. Esto es, usando la etiqueta `<b>` ó `<strong>`. Nosotros solo haremos uso de la etiqueta `<b>`.
+
+Para implementar esta funcionalidad vamos a crear dos reglas, una para comenzar la escritura en negrita `BOLD` y otra para terminar la escritura en negrita `BOLD_END`. 
+
+Necesitamos implementar la funcionalidad de esta forma ya que, como se mencionaba en la sección anterior, tenemos que tener en cuenta posibles anidamientos entre distintas funcionalidades. No podemos hacer únicamente una regla para `BOLD` que escriba directamente cualquier cadena de la forma `**cadena**` en negrita, ya que en este caso la palabra **_cadena_**, es decir, `**_cadena_**` ó `***cadena***` se traduciría al fichero HTML como `<b>_cadena_<\b>` ó `<b>*cadena*<\b>`, cuando la traducción correcta sería `<b><i>cadena<\i><\b>`. Esto es solo un ejemplo, este mismo caso se puede trasladar al anidamiento con cualquier otra funcionalidad. _flex_ siempre va a aplicar la funcionalidad externa en caso de funciones anidadas, pues como se ha explicado anteriormente, _flex_ prioriza la cadena más larga posible a la que le puede aplicar una regla. 
+
+Por tanto, las reglas nos quedarían de la siguiente forma: 
+
+	- Regla para la expresión regular `BOLD`
+```C++
+{BOLD} {
+	if (bold)
+		REJECT;
+	out <<  "<b>";
+	bold =  true;
+	yyless(2);
+}
+```
+En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la regla. Si la palabra no se estaba escribiendo en negrita, introducimos la etiqueta `<b>`, indicamos que se está escribiendo en negrita y que solo hemos procesado los dos primeros caracteres de la cadena (`**`), para que el resto se vuelva a evaluar, dejando paso así a las funcionalidades anidadas. 
+
+	- Regla para la expresión regular `BOLD_END`
+```C++ 
+{BOLD_END} {
+	if (!bold)
+		REJECT;
+	out <<  "</b>";
+	bold =  false;
+}
+```
+
+No se parsea en caso de no estar escribiendo en negrita. En caso contrario, se cierra la etiqueta y se indica que se ha dejado de escribir en negrita. 
+
+- Funcionalidad de *cursiva* 
+
+Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursiva, vamos a proceder análogamente al caso anterior. 
 
 
 ### Sección de Procedimientos de Usuario
