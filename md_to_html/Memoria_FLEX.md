@@ -6,12 +6,12 @@
 ## ÍNDICE
 1. **Introducción**
 2. **Desarrollo de la aplicación**
-	- **Planteamiento**
-	- **Plantilla**
-		- **Sección de Declaraciones**
-		- **Sección de Reglas**
-		- **Sección de Procedimientos de Usuario**
-	- **Generación del código fuente**
+    - **Planteamiento**
+    - **Plantilla**
+        - **Sección de Declaraciones**
+        - **Sección de Reglas**
+        - **Sección de Procedimientos de Usuario**
+    - **Generación del código fuente**
 3. **Ejemplo de ejecución**
 4. **Reflexiones**
 
@@ -42,23 +42,23 @@ Es un bloque delimitado por las secuencias %{ y %} donde podemos indicar la incl
 En este bloque necesitaremos incluir:
 - Ficheros de cabecera: `iostream, fstream, string, stack`
 - Variables globales:
-	- `ofstream out`- Será nuestro flujo de salida para la escritura del fichero HTML.
-	- `bool quote, bold, italic, strike` - Una variable global booleana para algunas funcionalidades de markdown que pueden ser anidadas y que requieren trato especial. Hablaremos más a fondo de este trato en la sección de Reglas.
-	- `int header`- Indicará el tipo de título que hay abierto en ese instante, para luego cerrarlo.
-	- `stack<string> listas` - Si hay listas anidadas necesitamos saber en qué orden cerrarlas.
+    - `ofstream out`- Será nuestro flujo de salida para la escritura del fichero HTML.
+    - `bool quote, bold, italic, strike` - Una variable global booleana para algunas funcionalidades de markdown que pueden ser anidadas y que requieren trato especial. Hablaremos más a fondo de este trato en la sección de Reglas.
+    - `int header`- Indicará el tipo de título que hay abierto en ese instante, para luego cerrarlo.
+    - `stack<string> listas` - Si hay listas anidadas necesitamos saber en qué orden cerrarlas.
 - Procedimientos:
-	- `string substr(const  char* s, size_t pos, size_t len = string::npos)`
-	Procedimiento que usaremos para obtener subcadenas de _yytext_.
-	- `bool  handle_list(const  char* yytext, bool ordered)`
-	Procedimiento que usaremos para añadir un elemento a una lista, cerrando los elementos y las listas anteriores en caso necesario.
-	- `bool  end_lists(int n =  0)`
-	Cierra las listas que haya abiertas hasta que solo queden _n_.
-	- `void  set_header(int n)`
-	Añade la etiqueta inicial de un título.
-	- `bool  end_headers()`
-	Añadir la etiqueta final de un título en caso de que sea necesario.
-	- `void  escape_html(string& s)`
-	Reemplaza los caracteres de _s_ que son reservados para HTML por su representación adecuada.
+    - `string substr(const  char* s, size_t pos, size_t len = string::npos)`
+    Procedimiento que usaremos para obtener subcadenas de _yytext_.
+    - `bool  handle_list(const  char* yytext, bool ordered)`
+    Procedimiento que usaremos para añadir un elemento a una lista, cerrando los elementos y las listas anteriores en caso necesario.
+    - `bool  end_lists(int n =  0)`
+    Cierra las listas que haya abiertas hasta que solo queden _n_.
+    - `void  set_header(int n)`
+    Añade la etiqueta inicial de un título.
+    - `bool  end_headers()`
+    Añadir la etiqueta final de un título en caso de que sea necesario.
+    - `void  escape_html(string& s)`
+    Reemplaza los caracteres de _s_ que son reservados para HTML por su representación adecuada.
 
 Por tanto, el bloque de copia nos quedaría de la siguiente forma:
 ```C++
@@ -190,11 +190,11 @@ Por tanto, las reglas nos quedarían de la siguiente forma:
 - Regla para la expresión regular `BOLD`
 ```C++
 {BOLD} {
-	if (bold)
-		REJECT;
-	out <<  "<b>";
-	bold =  true;
-	yyless(2);
+    if (bold)
+        REJECT;
+    out <<  "<b>";
+    bold =  true;
+    yyless(2);
 }
 ```
 En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la regla. Si la palabra no se estaba escribiendo en negrita, introducimos la etiqueta `<b>`, indicamos que se está escribiendo en negrita y que solo hemos procesado los dos primeros caracteres de la cadena (`**`), para que el resto se vuelva a evaluar, dejando paso así a las funcionalidades anidadas.
@@ -202,10 +202,10 @@ En primer lugar, si la palabra ya se está escribiendo en negrita, ignoramos la 
 - Regla para la expresión regular `BOLD_END`
 ```C++
 {BOLD_END} {
-	if (!bold)
-		REJECT;
-	out <<  "</b>";
-	bold =  false;
+    if (!bold)
+        REJECT;
+    out <<  "</b>";
+    bold =  false;
 }
 ```
 No se parsea en caso de no estar escribiendo en negrita. En caso contrario, se cierra la etiqueta y se indica que se ha dejado de escribir en negrita.
@@ -215,20 +215,20 @@ Siendo la etiqueta `<i>` utilizada en el formato HTML para la escritura en cursi
 - Regla para la expresión regular `ITALIC`
 ```C++
 {ITALIC} {
-	if (italic)
-		REJECT;
-	out <<  "<i>";
-	italic =  true;
-	yyless(1);
+    if (italic)
+        REJECT;
+    out <<  "<i>";
+    italic =  true;
+    yyless(1);
 }
 ```
 - Regla para la expresión regular `ITALIC_END`
 ```C++
 {ITALIC_END} {
-	if (!italic)
-		REJECT;
-	out <<  "</i>";
-	italic =  false;
+    if (!italic)
+        REJECT;
+    out <<  "</i>";
+    italic =  false;
 }
 ```
 
@@ -237,19 +237,19 @@ Siendo la etiqueta `<del>` utilizada en el formato HTML para la escritura en tac
 - Regla para la expresión regular `STRIKETHROUGH`
 ```C++
 {STRIKETHROUGH}	{
-	if (strike)
-		REJECT;
-	out << "<del>";
-	strike = true;
-	yyless(2);
+    if (strike)
+        REJECT;
+    out << "<del>";
+    strike = true;
+    yyless(2);
 }
 ```
 - Regla para la expresión regular `STRIKETHROUGH_END`
 ```C++
-	if (!strike)
-		REJECT;
-	out << "</del>";
-	strike = false;
+    if (!strike)
+        REJECT;
+    out << "</del>";
+    strike = false;
 ```
 
 #### Funcionalidad de cita
@@ -258,10 +258,10 @@ La etiqueta `<blockquote>` es utilizada en el formato HTML para la escritura de 
 En este caso, solo necesitaremos implementar una regla para la expresión regular `BLOCKQUOTE` que se encargará de iniciar una cita. La finalización de una cita se dará con dos o más saltos de líneas consecutivos, regla la cual implementaremos posteriormente.
 ```C++
 {BLOCKQUOTE}	{
-	if (!quote) {
-		out << "<blockquote>";
-		quote = true;
-	}
+    if (!quote) {
+        out << "<blockquote>";
+        quote = true;
+    }
 }
 ```
 En caso de que no se esté escribiendo ya una cita, se inicia e indica su escritura.
@@ -273,11 +273,11 @@ Implementaremos dos reglas, una para la expresión regular `LINK` que se encarga
 - Regla para la expresión regular `LINK`
 ```C++
 {LINK}			{
-	string s(yytext);
-	int pos = s.rfind('(');
-	string link = s.substr(pos+1, yyleng - (pos + 1) - 1);
-	out << "<a href=\"" + link + "\">";
-	yyless(1);
+    string s(yytext);
+    int pos = s.rfind('(');
+    string link = s.substr(pos+1, yyleng - (pos + 1) - 1);
+    out << "<a href=\"" + link + "\">";
+    yyless(1);
 }
 ```
 Escribimos el link e indicamos que tan solo hemos procesado el carácter `[` para que se procese el nombre del link y pueda aceptar otras funcionalidades.
@@ -285,7 +285,7 @@ Escribimos el link e indicamos que tan solo hemos procesado el carácter `[` par
 - Regla para la expresión regular `LINK_END`
 ```C++
 {LINK_END}		{
-	out << "</a>";
+    out << "</a>";
 }
 ```
 Terminamos la escritura del nombre del link y, con ello, la escritura completa del link.
@@ -298,11 +298,11 @@ La etiqueta `<img>` es usada en formato HTML para el insertado de imágenes. Rea
 En este caso, una única regla va a inciar y terminar la funcionalidad. Su implementación quedaría de la siguiente forma:
 ```C++
 {IMAGE}			{
-	string s(yytext);
-	int pos = s.find("]");
-	string alt = s.substr(2, pos-2);
-	string link = s.substr(pos+2, yyleng - (pos + 2) - 1);
-	out << "<img src=\"" << link << "\" alt=\"" << alt << "\">";
+    string s(yytext);
+    int pos = s.find("]");
+    string alt = s.substr(2, pos-2);
+    string link = s.substr(pos+2, yyleng - (pos + 2) - 1);
+    out << "<img src=\"" << link << "\" alt=\"" << alt << "\">";
 }
 ```
 Leemos el link y el texto alternativo. A continuación, escribimos la etiqueta completa.
@@ -312,8 +312,8 @@ En formato HTML se usa la etiqueta `<hr>` para el insertado de líneas horizonta
 Como ya vimos en el bloque de alias, contamos con una expresión regular `LINE` que nos va a facilitar la implementación de esta funcionalidad. Tendremos que implementar una única regla que se encargará del insertado de línea, la cual se muestra a continuación:
 ```C++
 {LINE}			{
-	end_lists();
-	out << "<hr>" << endl;
+    end_lists();
+    out << "<hr>" << endl;
 }
 ```
 Como se puede observar, es una funcionalidad muy sencilla de implementar. Lo único que tenemos que tener en cuenta es, que en caso de estar dentro de un conjunto de listas, tendremos que finalizarlas.
@@ -325,7 +325,7 @@ Para la implementación de esta funcionalidad nos apoyaremos sobre el procedimie
 La finalización de escritura de un título se dará con uno o más saltos de líneas consecutivos, regla la cual implementaremos posteriormente.
 ```C++
 {HEADING}		{
-	set_header(yyleng);
+    set_header(yyleng);
 }
 ```
 #### Funcionalidad para el uso de listas
@@ -336,8 +336,8 @@ Los elementos de una lista en HTML se representan mediante la etiqueta `<li>`. S
 Las listas sin orden en HTML se representan mediante la etiqueta `<ul>`. Su implementación vendrá dada por la siguiente regla:
 ```C++
 {UNORDERED_LIST}	{
-	if (!handle_list(yytext, false))
-		REJECT;
+    if (!handle_list(yytext, false))
+        REJECT;
 }
 ```
 
@@ -345,8 +345,8 @@ Las listas sin orden en HTML se representan mediante la etiqueta `<ul>`. Su impl
 Las listas ordenadas en HTML se representan mediante la etiqueta `<ol>`. Su implementación vendrá dada por la siguiente regla:
 ```C++
 {ORDERED_LIST}		{
-	if (!handle_list(yytext, true))
-		REJECT;
+    if (!handle_list(yytext, true))
+        REJECT;
 }
 ```
 
@@ -358,9 +358,9 @@ La implementación de esta funcionalidad es bastante compleja ya que tenemos que
 - Para una línea de código representada entre 3 comillas inversas en Mardown
 ``` C++
 {CODE_1_LINE}	{
-	string code = substr(yytext, 3, yyleng - 6);
-	escape_html(code);
-	out << "<code>" << code << "</code>";
+    string code = substr(yytext, 3, yyleng - 6);
+    escape_html(code);
+    out << "<code>" << code << "</code>";
 }
 ```
 Leemos el código, cambiamos los caracteres reservados de HTML y escribimos la etiqueta con el código.
@@ -368,15 +368,15 @@ Leemos el código, cambiamos los caracteres reservados de HTML y escribimos la e
 - Para un bloque de código
 ```C++
 {CODE_1} 		{
-	string s(yytext);
-	size_t start = s.find('\n') + 1;
-	size_t end = s.find("\n```") + 1;
-	string code = s.substr(start, end - start);
-	escape_html(code);
-	out << "<pre><code>" << code << "</code></pre>";
+    string s(yytext);
+    size_t start = s.find('\n') + 1;
+    size_t end = s.find("\n```") + 1;
+    string code = s.substr(start, end - start);
+    escape_html(code);
+    out << "<pre><code>" << code << "</code></pre>";
 
-	if (end != yyleng - 3)
-		yyless(start + end-start + 3);
+    if (end != yyleng - 3)
+        yyless(start + end-start + 3);
 }
 ```
 En nuestra aplicación vamos a prescindir del coloreado del código según el lenguaje utilizado, luego omitimos la cadena que representa el tipo de lenguaje. Leemos el código delimitado por los saltos de línea después de las 3 primeras comillas inversas hasta encontrar otras 3 comillas inversas. A continuación, escribimos la etiqueta con dicho código leído en el fichero HTML. Posteriormente, como _flex_ escoge la expresión regular más grande, puede que dentro de este bloque de código haya varios más, por ello es necesario hacer una delimitación manual e indicarle a flex que en ese caso siga procesando el resto.
@@ -384,9 +384,9 @@ En nuestra aplicación vamos a prescindir del coloreado del código según el le
 - Para una línea de código representada entre simples comillas inversas en Mardown
 ```C++
 {CODE_2}		{
-	string code = substr(yytext, 1, yyleng - 2);
-	escape_html(code);
-	out << "<code>" << code << "</code>";
+    string code = substr(yytext, 1, yyleng - 2);
+    escape_html(code);
+    out << "<code>" << code << "</code>";
 }
 ```
 Análogo a la regla `CODE_1_LINE`.
@@ -396,9 +396,9 @@ Los saltos de línea van a determinar la finalización de escritura de títulos,
 - Un salto de línea
 ```C++
 \n				{
-	out << endl;
-	if (!end_headers())
-		out << "<br>" << endl;
+    out << endl;
+    if (!end_headers())
+        out << "<br>" << endl;
 }
 ```
 Escribimos en el fichero HTML un salto de línea. Si se estaba escribiendo un título se finaliza su escritura. En caso contrario, introducimos una etiqueta _line break_.
@@ -406,16 +406,16 @@ Escribimos en el fichero HTML un salto de línea. Si se estaba escribiendo un t�
 - Dos o más saltos de línea consecutivos
 ```C++
 \n{2,}			{
-	out << endl;
-	if (quote) {
-		out << "</blockquote>" << endl;
-		quote = false;
-	}
-	bool remove_br = end_headers();
-	remove_br |= end_lists();
-	out << endl;
-	if (!remove_br)
-		out << "<br><br>" << endl;
+    out << endl;
+    if (quote) {
+        out << "</blockquote>" << endl;
+        quote = false;
+    }
+    bool remove_br = end_headers();
+    remove_br |= end_lists();
+    out << endl;
+    if (!remove_br)
+        out << "<br><br>" << endl;
 }
 ```
 Escribimos dos saltos de línea. Se finalizan las escrituras de citas, títulos y listas. Si no se estaba escribiendo ningún título ó lista tenemos que introducir dos etiquetas _line break_.
@@ -430,37 +430,37 @@ Necesitamos incluir:
 Creamos un string a partir del puntero constante char y usamos el método de instancia substr de la clase string de la STL.
 ```C++
 string substr(const char* s, size_t pos, size_t len) {
-	string str(s);
-	return str.substr(pos, len);
+    string str(s);
+    return str.substr(pos, len);
 }
 ```
 - La implementación del método `bool handle_list(const  char* yytext, bool ordered)`
 
 ```C++
 bool handle_list(const  char* yytext, bool ordered) {
-	string l = (ordered ?  "ol"  :  "ul");
-	string s(yytext);
-	int n_tabs =  s.find_first_not_of('\t');
-	int n_list = n_tabs +  1;
+    string l = (ordered ?  "ol"  :  "ul");
+    string s(yytext);
+    int n_tabs =  s.find_first_not_of('\t');
+    int n_list = n_tabs +  1;
 
-	if (n_list ==  listas.size() +  1) {
-		// Creamos lista, posiblemente dentro de otra
-		out <<  "<"  << l <<  ">"  << endl;
-		listas.push(l);
-	} else  if (n_list <  listas.size()) {
-		// Terminamos listas, y seguimos con una lista exterior
-		end_lists(n_list);
-	} else  if (n_list ==  listas.size()) {
-		// Seguimos en la misma lista. Terminar primero el elemento anterior
-		out <<  "</li>"  << endl;
-	} else {
-		// Lista inválida (se han añadido más de dos tabuladores nuevos).
-		// Se devuelve false y se parseará como texto normal
-		return  false;
-	}
-	out <<  "<li>";
+    if (n_list ==  listas.size() +  1) {
+        // Creamos lista, posiblemente dentro de otra
+        out <<  "<"  << l <<  ">"  << endl;
+        listas.push(l);
+    } else  if (n_list <  listas.size()) {
+        // Terminamos listas, y seguimos con una lista exterior
+        end_lists(n_list);
+    } else  if (n_list ==  listas.size()) {
+        // Seguimos en la misma lista. Terminar primero el elemento anterior
+        out <<  "</li>"  << endl;
+    } else {
+        // Lista inválida (se han añadido más de dos tabuladores nuevos).
+        // Se devuelve false y se parseará como texto normal
+        return  false;
+    }
+    out <<  "<li>";
 
-	return  true;
+    return  true;
 }
 ```
 - La implementación del método `void  end_lists(int n)`
@@ -469,11 +469,11 @@ Mediante un while vamos a ir quitando listas de la pila hasta que haya _n_ lista
 
 ```C++
 void end_lists(int n) {
-	while (n <  listas.size()) {
-		// Terminar listas abiertas
-		out <<  "</li>\n</"  <<  listas.top() <<  ">\n";
-		listas.pop();
-	}
+    while (n <  listas.size()) {
+        // Terminar listas abiertas
+        out <<  "</li>\n</"  <<  listas.top() <<  ">\n";
+        listas.pop();
+    }
 }
 ```
 - La implementación del método `void  set_header(int n)`
@@ -482,10 +482,10 @@ Si no se está escribiendo un título, se va a escribir en el fichero HTML el in
 
 ```C++
 void set_header(int n) {
-	if (!header) {
-		header = n;
-		out <<  "<h"  << n <<  ">";
-	}
+    if (!header) {
+        header = n;
+        out <<  "<h"  << n <<  ">";
+    }
 }
 ```
 - La implementación del método `void  end_headers()`
@@ -493,10 +493,10 @@ void set_header(int n) {
 En caso de estar escribiéndose un título se va a escribir en el fichero HTML un fin de título correspondiente. Dejamos la variable global _header_ a 0 para indicar que no se está escribiendo ningún título.
 ```C++
 void end_headers(){
-	if (!header)
-		return;
-	out <<  "</h"  << header <<  ">";
-	header =  0;
+    if (!header)
+        return;
+    out <<  "</h"  << header <<  ">";
+    header =  0;
 }
 ```
 - La implementación del método `escape_html(string& s)`
@@ -504,20 +504,20 @@ void end_headers(){
 Mediante el uso de un for vamos a recorrer todos los caracteres de una cadena y, con la ayuda de un switch, los cambiamos por su representación adecuada en caso de ser un símbolo reservado para HTML.
 ```C++
 void escape_html(string& s) {
-	string buffer;
-	buffer.reserve(s.size());
+    string buffer;
+    buffer.reserve(s.size());
 
-	for (size_t pos =  0; pos !=  s.size(); ++pos) {
-		switch (s[pos]) {
-			case  '&': buffer.append("&amp;"); break;
-			case  '\"': buffer.append("&quot;"); break;
-			case  '\'': buffer.append("&apos;"); break;
-			case  '<': buffer.append("&lt;"); break;
-			case  '>': buffer.append("&gt;"); break;
-			default: buffer.append(&s[pos], 1); break;
-		}
-	}
-	s.swap(buffer);
+    for (size_t pos =  0; pos !=  s.size(); ++pos) {
+        switch (s[pos]) {
+            case  '&': buffer.append("&amp;"); break;
+            case  '\"': buffer.append("&quot;"); break;
+            case  '\'': buffer.append("&apos;"); break;
+            case  '<': buffer.append("&lt;"); break;
+            case  '>': buffer.append("&gt;"); break;
+            default: buffer.append(&s[pos], 1); break;
+        }
+    }
+    s.swap(buffer);
 }
 ```
 - Un método para generar la cabecera del fichero HTML
@@ -525,22 +525,22 @@ void escape_html(string& s) {
 Escribimos la cabecera del fichero HTML antes de llamar a la función _yylex()_.
 ```C++
 void generate_html(yyFlexLexer& flujo, const  string& title) {
-	out <<
-		"<!DOCTYPE html>\n"
-		"<html>\n"
-		"<head>\n"
-		"<title>"  << title <<  "</title>\n"  <<
-		"<link rel=\"stylesheet\" 	href=\"https://stackedit.io/style.css\">"
-		"</head>\n"
-		"<body class=\"stackedit__html\">\n"
-		"<p>\n";
+    out <<
+        "<!DOCTYPE html>\n"
+        "<html>\n"
+        "<head>\n"
+        "<title>"  << title <<  "</title>\n"  <<
+        "<link rel=\"stylesheet\" 	href=\"https://stackedit.io/style.css\">"
+        "</head>\n"
+        "<body class=\"stackedit__html\">\n"
+        "<p>\n";
 
-	flujo.yylex();
+    flujo.yylex();
 
-	out <<
-		"</p>\n"
-		"</body>\n"
-		"</html>\n";
+    out <<
+        "</p>\n"
+        "</body>\n"
+        "</html>\n";
 }
 ```
 - La función main
@@ -552,26 +552,26 @@ _1_ - Nos proporcionan un fichero.
 
 En este caso tenemos que comprobar que el fichero sea de tipo Markdown, es decir, extensión _.md_. Si el tipo de fichero no es válido, se aborta la ejecución del programa con un error.
 ```C++
-	if (argc >= 2) {
-		// comprobamos si es un fichero markdown
-		string filename_in(argv[1]);
-		int n = filename_in.rfind('.');
-		string ext = filename_in.substr(n);
-		if (ext != ".md"){
-			cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
-			exit(1);
-		}
+    if (argc >= 2) {
+        // comprobamos si es un fichero markdown
+        string filename_in(argv[1]);
+        int n = filename_in.rfind('.');
+        string ext = filename_in.substr(n);
+        if (ext != ".md"){
+            cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
+            exit(1);
+        }
 ```
 En caso contrario, el fichero se abre y se guarda su nombre para utilizarlo en la creación del fichero HTML.
 ```C++
-		// abrimos el fichero
-		in.open(argv[1]);
-		if (!in) {
-			cerr << "Error abriendo archivo de entrada " << argv[1] << endl;
-			exit(1);
-		}
-		p_in = &in;
-		title = filename_in.substr(0,n);
+        // abrimos el fichero
+        in.open(argv[1]);
+        if (!in) {
+            cerr << "Error abriendo archivo de entrada " << argv[1] << endl;
+            exit(1);
+        }
+        p_in = &in;
+        title = filename_in.substr(0,n);
 ```
 
 
@@ -581,82 +581,82 @@ _2_ - El programa se ejecuta sin argumentos
 En este caso, permitimos que se escriba en Markdown por la entrada estándar, es decir, directamente por teclado, y asignamos un nombre por defecto para el fichero HTML.
 
 ```C++
-	} else {
-		title = "out";
-		p_in = &cin;
-	}
+    } else {
+        title = "out";
+        p_in = &cin;
+    }
 ```
 
  Una vez ya establecido el flujo de entrada y el nombre para nuestro fichero HTML, procedemos a la creación del mismo:
 ```C++
-	// creamos el fichero html
-	filename_out = title + ".html";
-	out.open(filename_out);
-	if (!out) {
-		cerr << "Error abriendo archivo de salida " << filename_out << endl;
-		exit(1);
-	}
+    // creamos el fichero html
+    filename_out = title + ".html";
+    out.open(filename_out);
+    if (!out) {
+        cerr << "Error abriendo archivo de salida " << filename_out << endl;
+        exit(1);
+    }
 ```
 Antes de la lectura del fichero, ignoramos una posible marca de orden de bytes.
 ```C++
-	ignore_utf8_header(*p_in);
+    ignore_utf8_header(*p_in);
 ```
 
 Finalmente, iniciamos la lectura de la entrada y la escritura del fichero HTML.
 ```C++
-	yyFlexLexer flujo(p_in, &out);
-	generate_html(flujo, title);
+    yyFlexLexer flujo(p_in, &out);
+    generate_html(flujo, title);
 ```
 
 La función main completa quedaría por tanto de la siguiente manera:
 
 ```C++
 int main(int argc, char** argv) {
-	string filename_out, title;
-	ifstream in;
-	istream *p_in;
+    string filename_out, title;
+    ifstream in;
+    istream *p_in;
 
-	if (argc >= 2) {
-		// comprobamos si es un fichero markdown
-		string filename_in(argv[1]);
-		int n = filename_in.rfind('.');
-		string ext = filename_in.substr(n);
-		if (ext != ".md"){
-			cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
-			exit(1);
-		}
+    if (argc >= 2) {
+        // comprobamos si es un fichero markdown
+        string filename_in(argv[1]);
+        int n = filename_in.rfind('.');
+        string ext = filename_in.substr(n);
+        if (ext != ".md"){
+            cerr << "Error. El fichero " << filename_in << " no es un fichero markdown" << endl;
+            exit(1);
+        }
 
-		// abrimos el fichero
-		in.open(argv[1]);
-		if (!in) {
-			cerr << "Error abriendo archivo de entrada " << argv[1] << endl;
-			exit(1);
-		}
-		p_in = &in;
-		title = filename_in.substr(0,n);
+        // abrimos el fichero
+        in.open(argv[1]);
+        if (!in) {
+            cerr << "Error abriendo archivo de entrada " << argv[1] << endl;
+            exit(1);
+        }
+        p_in = &in;
+        title = filename_in.substr(0,n);
 
-	} else {
-		title = "out";
-		p_in = &cin;
-	}
+    } else {
+        title = "out";
+        p_in = &cin;
+    }
 
-	// creamos el fichero html
-	filename_out = title + ".html";
-	out.open(filename_out);
-	if (!out) {
-		cerr << "Error abriendo archivo de salida " << filename_out << endl;
-		exit(1);
-	}
+    // creamos el fichero html
+    filename_out = title + ".html";
+    out.open(filename_out);
+    if (!out) {
+        cerr << "Error abriendo archivo de salida " << filename_out << endl;
+        exit(1);
+    }
 
-	ignore_utf8_header(*p_in);
-	yyFlexLexer flujo(p_in, &out);
-	generate_html(flujo, title);
+    ignore_utf8_header(*p_in);
+    yyFlexLexer flujo(p_in, &out);
+    generate_html(flujo, title);
 
-	cout << "Fin" << endl;
-	out.close();
-	in.close();
+    cout << "Fin" << endl;
+    out.close();
+    in.close();
 
-	return 0;
+    return 0;
 }
 ```
 
@@ -674,14 +674,14 @@ Para hacer el proceso de generación del ejecutable más rápido y sencillo pode
 all: prog
 
 prog: lex.yy.cc
-	g++ lex.yy.cc -o prog
+    g++ lex.yy.cc -o prog
 
 lex.yy.cc: plantilla.lex
-	flex --c++ plantilla.lex
+    flex --c++ plantilla.lex
 clean:
-	rm prog
-	rm lex.yy.cc
-	rm *.html
+    rm prog
+    rm lex.yy.cc
+    rm *.html
 ```
 
 ## 3. Ejemplo de ejecución
